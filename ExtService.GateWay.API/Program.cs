@@ -5,6 +5,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Register options
 builder.RegisterOptions();
 
+// Register loggers
+builder.RegisterLoggers();
+
 // Register common services
 builder.RegisterCommonServices();
 

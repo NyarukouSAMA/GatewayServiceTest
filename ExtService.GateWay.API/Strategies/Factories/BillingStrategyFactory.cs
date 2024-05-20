@@ -8,23 +8,35 @@ namespace ExtService.GateWay.API.Strategies.Factories
 {
     public class BillingStrategyFactory : IBillingStrategyFactory
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly MockupOptions _mockupOptions;
-        public BillingStrategyFactory(IServiceProvider serviceProvider, IOptions<MockupOptions> mockupOptions)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public BillingStrategyFactory(
+            IHttpContextAccessor httpContextAccessor,
+            IOptions<MockupOptions> mockupOptions)
         {
             _mockupOptions = mockupOptions.Value;
-            _serviceProvider = serviceProvider;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public IBillingStrategy GetBillingStrategy()
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                string message = "HttpContext can't be null.";
+
+                throw new ArgumentNullException(message);
+            }
+
+            var scopedProvider = httpContext.RequestServices;
+
             if (_mockupOptions.BillingMockup)
             {
-                return _serviceProvider.GetRequiredService<BillingServiceMockup>();
+                return scopedProvider.GetRequiredService<BillingServiceMockup>();
             }
             else
             {
-                return _serviceProvider.GetRequiredService<CheckAndIncrementCounter>();
+                return scopedProvider.GetRequiredService<CheckAndIncrementCounter>();
             }
         }
     }

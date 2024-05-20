@@ -52,12 +52,14 @@ namespace ExtService.GateWay.API.Strategies.SProxing
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while processing request.");
+                string headerMessage = "An error occurred while processing request.";
+
+                _logger.LogError(ex, headerMessage);
                 return new ServiceResponse<string>()
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    ErrorMessage = $"An error occurred while processing request. {ex.Message}"
+                    ErrorMessage = ex.BuildExceptionMessage(headerMessage)
                 };
             }
         }

@@ -8,25 +8,37 @@ namespace ExtService.GateWay.API.Strategies.Factories
 {
     public class ClientIdentificationStrategyFactory : IClientIdentificationStrategyFactory
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly MockupOptions _mockupOptions;
-        public ClientIdentificationStrategyFactory(IServiceProvider serviceProvider, IOptions<MockupOptions> mockupOptions)
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        public ClientIdentificationStrategyFactory(
+            IHttpContextAccessor httpContextAccessor,
+            IOptions<MockupOptions> mockupOptions)
         {
             _mockupOptions = mockupOptions.Value;
-            _serviceProvider = serviceProvider;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public IClientIdentificationStrategy GetClientIdentificationStrategy()
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                string message = "HttpContext can't be null.";
+
+                throw new ArgumentNullException(message);
+            }
+
+            var scopedProvider = httpContext.RequestServices;
+
             if (_mockupOptions.ClientIdentificationMockup)
             {
-                return _serviceProvider.GetRequiredService<ClientIdentificationMockup>();
+                return scopedProvider.GetRequiredService<ClientIdentificationMockup>();
             }
             else
             {
                 try
                 {
-                    return _serviceProvider.GetRequiredService<CheckUserByClientId>();
+                    return scopedProvider.GetRequiredService<CheckUserByClientId>();
                 }
                 catch (Exception ex)
                 {

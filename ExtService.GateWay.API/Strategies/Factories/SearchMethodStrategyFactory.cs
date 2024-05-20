@@ -8,25 +8,36 @@ namespace ExtService.GateWay.API.Strategies.Factories
 {
     public class SearchMethodStrategyFactory : ISearchMethodStrategyFactory
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly MockupOptions _mockupOptions;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public SearchMethodStrategyFactory(IServiceProvider serviceProvider,
+        public SearchMethodStrategyFactory(IHttpContextAccessor httpContextAccessor,
             IOptions<MockupOptions> mockupOptions)
         {
-            _serviceProvider = serviceProvider;
             _mockupOptions = mockupOptions.Value;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public IMethodInfoStrategy GetMethodInfoStrategy()
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            if (httpContext == null)
+            {
+                string message = "HttpContext can't be null.";
+
+                throw new ArgumentNullException(message);
+            }
+
+            var scopedProvider = httpContext.RequestServices;
+
             if (_mockupOptions.MethodInfoMockup)
             {
-                return _serviceProvider.GetRequiredService<MethodInfoMockup>();
+                return scopedProvider.GetRequiredService<MethodInfoMockup>();
             }
             else
             {
-                return _serviceProvider.GetRequiredService<GetMethodByName>();
+                return scopedProvider.GetRequiredService<GetMethodByName>();
             }
         }
 

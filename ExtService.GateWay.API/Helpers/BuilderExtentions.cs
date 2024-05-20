@@ -1,8 +1,8 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
 using ExtService.GateWay.API.Abstractions.Repositories;
 using ExtService.GateWay.API.Abstractions.Resolvers;
-using ExtService.GateWay.API.Abstractions.Strategy;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
+using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Models.Options;
 using ExtService.GateWay.API.Services.Repositories;
 using ExtService.GateWay.API.Strategies.Factories;
@@ -11,11 +11,14 @@ using ExtService.GateWay.API.Strategies.SClientIdentification;
 using ExtService.GateWay.API.Strategies.SMethodInfo;
 using ExtService.GateWay.API.Strategies.SProxing;
 using ExtService.GateWay.API.Utilities.DBUtils;
+using ExtService.GateWay.API.Utilities.LoggerProviders;
 using ExtService.GateWay.API.Utilities.Resolvers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using Serilog;
+using Serilog.Settings.Configuration;
 using System.Data;
 using System.Security.Cryptography;
 
@@ -30,8 +33,31 @@ namespace ExtService.GateWay.API.Helpers
             return builder;
         }
 
+        public static WebApplicationBuilder RegisterLoggers(this WebApplicationBuilder builder)
+        {
+            var seriLogLogger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration)
+                .CreateLogger();
+
+            var requestLogLogger = new LoggerConfiguration()
+                .ReadFrom.Configuration(builder.Configuration, new ConfigurationReaderOptions { 
+                    SectionName = LoggingConstants.RequestLogCategory
+                }).CreateLogger();
+
+            builder.Logging.ClearProviders();
+            builder.Logging.AddProvider(new BaseSerilogProvider(seriLogLogger))
+                .AddFilter<BaseSerilogProvider>((category, level) => category != LoggingConstants.RequestLogCategory);
+
+            builder.Logging.AddProvider(new RequestLogProvider(requestLogLogger))
+                .AddFilter<RequestLogProvider>((category, level) => category == LoggingConstants.RequestLogCategory);
+
+            return builder;
+        }
+
         public static WebApplicationBuilder RegisterCommonServices(this WebApplicationBuilder builder)
         {
+            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
             builder.Services.AddHttpClient();
             
             return builder;
@@ -123,10 +149,10 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddScoped<ServiceProxing>();
 
             // Register factories
-            builder.Services.AddScoped<IBillingStrategyFactory, BillingStrategyFactory>();
-            builder.Services.AddScoped<IClientIdentificationStrategyFactory, ClientIdentificationStrategyFactory>();
-            builder.Services.AddScoped<ISearchMethodStrategyFactory, SearchMethodStrategyFactory>();
-            builder.Services.AddScoped<IProxingStrategyFactory, ProxingStrategyFactory>();
+            builder.Services.AddSingleton<IBillingStrategyFactory, BillingStrategyFactory>();
+            builder.Services.AddSingleton<IClientIdentificationStrategyFactory, ClientIdentificationStrategyFactory>();
+            builder.Services.AddSingleton<ISearchMethodStrategyFactory, SearchMethodStrategyFactory>();
+            builder.Services.AddSingleton<IProxingStrategyFactory, ProxingStrategyFactory>();
 
             // Register handlers
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());

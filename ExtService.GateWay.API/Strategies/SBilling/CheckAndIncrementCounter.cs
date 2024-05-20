@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using ExtService.GateWay.API.Abstractions.Strategy;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
+using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.ServiceRequests;
 using System.Data;
@@ -85,12 +86,14 @@ WHERE IdentificationId = @IdentificationId
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred when handling billing request.");
+                string headerMessage = "An error occurred when handling billing request.";
+
+                _logger.LogError(ex, headerMessage);
                 return new ServiceResponse<bool>
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    ErrorMessage = $"An error occurred when handling billing request: {ex.Message}"
+                    ErrorMessage = ex.BuildExceptionMessage(headerMessage)
                 };
             }
         }

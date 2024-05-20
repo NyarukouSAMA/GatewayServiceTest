@@ -1,5 +1,6 @@
 ﻿using ExtService.GateWay.API.Abstractions.Strategy;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
+using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.DBModels;
 using ExtService.GateWay.API.Models.ServiceRequests;
@@ -47,12 +48,14 @@ namespace ExtService.GateWay.API.Strategies.SMethodInfo
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred when fetching method information.");
+                string headerMessage = "An error occurred while fetching method information.";
+
+                _logger.LogError(ex, headerMessage);
                 return new ServiceResponse<MethodInfo>
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    ErrorMessage = $"An error occurred when fetching method information. {ex.Message}"
+                    ErrorMessage = ex.BuildExceptionMessage(headerMessage)
                 };
             }
         }
