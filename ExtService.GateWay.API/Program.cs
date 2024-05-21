@@ -1,4 +1,5 @@
 using ExtService.GateWay.API.Helpers;
+using ExtService.GateWay.API.Utilities.DBUtils;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,7 +10,7 @@ builder.RegisterOptions();
 builder.RegisterLoggers();
 
 // Register common services
-builder.RegisterCommonServices();
+builder.RegisterHttpServices();
 
 // Register JWT token authentication
 builder.RegisterJWTTokenAuth();
@@ -26,6 +27,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Apply migrations
+MigrationManager.ApplyMigration(app.Services, app.Configuration);
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

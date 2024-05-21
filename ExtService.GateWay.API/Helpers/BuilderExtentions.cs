@@ -20,6 +20,7 @@ using Npgsql;
 using Serilog;
 using Serilog.Settings.Configuration;
 using System.Data;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
 namespace ExtService.GateWay.API.Helpers
@@ -30,6 +31,7 @@ namespace ExtService.GateWay.API.Helpers
         {
             builder.Services.Configure<KeyCloakOptions>(builder.Configuration.GetSection(KeyCloakOptions.KeyCloakConfigSection));
             builder.Services.Configure<MockupOptions>(builder.Configuration.GetSection(MockupOptions.MockupOptionsSection));
+            builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.ProxyOptionsSection));
             return builder;
         }
 
@@ -54,12 +56,28 @@ namespace ExtService.GateWay.API.Helpers
             return builder;
         }
 
-        public static WebApplicationBuilder RegisterCommonServices(this WebApplicationBuilder builder)
+        public static WebApplicationBuilder RegisterHttpServices(this WebApplicationBuilder builder)
         {
             builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
-            builder.Services.AddHttpClient();
-            
+            var proxyOptions = builder.Configuration.GetSection(ProxyOptions.ProxyOptionsSection).Get<ProxyOptions>();
+
+            builder.Services.AddHttpClient(HTTPConstants.SuggestionApiClientName, client =>
+            {
+                client.BaseAddress = new Uri(proxyOptions.SuggestionApiBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(proxyOptions.SuggestionApiTimeoutInSeconds);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", proxyOptions.SuggestionApiToken);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
+            builder.Services.AddHttpClient(HTTPConstants.CleanerApiClientName, client =>
+            {
+                client.BaseAddress = new Uri(proxyOptions.CleanerApiBaseUrl);
+                client.Timeout = TimeSpan.FromSeconds(proxyOptions.CleanerApiTimeoutInSeconds);
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", proxyOptions.CleanerApiToken);
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            });
+
             return builder;
         }
 

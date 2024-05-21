@@ -5,6 +5,6 @@ namespace ExtService.GateWay.API.Abstractions.Strategy
 {
     public interface IProxingStrategy
     {
-        Task<ServiceResponse<string>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken);
+        Task<ServiceResponse<HttpResponseMessage>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken);
     }
 }
