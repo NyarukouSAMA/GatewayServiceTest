@@ -84,7 +84,7 @@ namespace ExtService.GateWay.API.Helpers
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = BuildRSAKey("MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8YRVL+Jssv2jcG9cChkzpGJyXEUShraJ76xtZMx7wQg/Rz8GOHaXFSRiCPxH5Vuo+enQrtotxvUQBZSX6KpPBF5HUfXzy04R0ybtLfXcaUstU5emDuLmCHtnRmlDMv01AXC5StTq2XUJDUIN0BdWIBpVb9HM7LVrj1l7zwlCNVSxAPrRL2U+YS1WNuF0NGsaI0NNQ43OX4KkgWdRXTzcWXiSUUXKsZdu0zkmlpFo8C1FXp2Q7CVN/R5cGKAcMyKRLRMiHcznZ0IVQBxqAuHTVN5oo4+egktaavKQQEjVPckuoCvEzxN7WCZlUWgwChBR+dP1oyYKNRGR9TuxhBBYewIDAQAB"),
+                            IssuerSigningKey = BuildRSAKey("Test"),
                             ValidateIssuer = true,
                             ValidIssuers = new[] { keyCloakOptions.KeyCloakRealmAuthority },
                             ValidateAudience = false,
