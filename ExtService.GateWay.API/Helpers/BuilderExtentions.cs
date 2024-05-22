@@ -5,14 +5,15 @@ using ExtService.GateWay.API.Abstractions.UnitsOfWork;
 using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Models.Options;
 using ExtService.GateWay.API.Services.Repositories;
-using ExtService.GateWay.API.Strategies.Factories;
-using ExtService.GateWay.API.Strategies.SBilling;
-using ExtService.GateWay.API.Strategies.SClientIdentification;
-using ExtService.GateWay.API.Strategies.SMethodInfo;
-using ExtService.GateWay.API.Strategies.SProxing;
+using ExtService.GateWay.API.Services.Factories;
+using ExtService.GateWay.API.Services.SBilling;
+using ExtService.GateWay.API.Services.SClientIdentification;
+using ExtService.GateWay.API.Services.SMethodInfo;
+using ExtService.GateWay.API.Services.SProxing;
 using ExtService.GateWay.API.Utilities.DBUtils;
 using ExtService.GateWay.API.Utilities.LoggerProviders;
 using ExtService.GateWay.API.Utilities.Resolvers;
+using ExtService.GateWay.DBContext;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -167,10 +168,10 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddScoped<ServiceProxing>();
 
             // Register factories
-            builder.Services.AddSingleton<IBillingStrategyFactory, BillingStrategyFactory>();
-            builder.Services.AddSingleton<IClientIdentificationStrategyFactory, ClientIdentificationStrategyFactory>();
-            builder.Services.AddSingleton<ISearchMethodStrategyFactory, SearchMethodStrategyFactory>();
-            builder.Services.AddSingleton<IProxingStrategyFactory, ProxingStrategyFactory>();
+            builder.Services.AddSingleton<IBillingServiceFactory, BillingServiceFactory>();
+            builder.Services.AddSingleton<IClientIdentificationServiceFactory, ClientIdentificationServiceFactory>();
+            builder.Services.AddSingleton<ISearchMethodServiceFactory, SearchMethodServiceFactory>();
+            builder.Services.AddSingleton<IProxingServiceFactory, ProxingServiceFactory>();
 
             // Register handlers
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());

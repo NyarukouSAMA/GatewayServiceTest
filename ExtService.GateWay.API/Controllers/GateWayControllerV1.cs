@@ -1,7 +1,10 @@
 ﻿using ExtService.GateWay.API.Constants;
+using ExtService.GateWay.API.Models.HandlerModels;
 using ExtService.GateWay.API.Models.Logging;
 using ExtService.GateWay.API.Models.ServiceRequests;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
@@ -25,81 +28,66 @@ namespace ExtService.GateWay.API.Controllers
         }
 
         [HttpPost("proxy")]
-        //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        public async Task<IActionResult> Proxy([FromBody] ProxyRequest request)
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> Proxy()
         {
-            var clientId = "testClientId";
-            //var clientId = User.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
+            string requestContent = await new StreamReader(Request.Body).ReadToEndAsync();
+
+            //var clientId = "testClientId";
+            var clientId = User.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
             if (string.IsNullOrEmpty(clientId))
             {
                 _logger.LogError("Client id not found in token.");
                 return Unauthorized();
             }
 
-            var identificationResponce = await _mediator.Send(new ClientIdentificationRequest { ClientId = clientId });
-            if (!identificationResponce.IsSuccess)
-            {
-                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<ProxyRequest, string>
-                {
-                    ErrorMessage = identificationResponce.ErrorMessage,
-                    IsSuccess = identificationResponce.IsSuccess,
-                    StatusCode = identificationResponce.StatusCode,
-                    RequestData = request
-                }));
-                return StatusCode(identificationResponce.StatusCode, identificationResponce.ErrorMessage);
-            }
-
-            var methodInfoResponce = await _mediator.Send(new SearchMethodRequest { MethodName = HttpContext.Request.Method });
-            if (!methodInfoResponce.IsSuccess)
-            {
-                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<ProxyRequest, string>
-                {
-                    ErrorMessage = methodInfoResponce.ErrorMessage,
-                    IsSuccess = methodInfoResponce.IsSuccess,
-                    StatusCode = methodInfoResponce.StatusCode,
-                    RequestData = request
-                }));
-                return StatusCode(methodInfoResponce.StatusCode, methodInfoResponce.ErrorMessage);
-            }
-
-            var billingResponce = await _mediator.Send(new BillingRequest
+            var billingResponce = await _mediator.Send(new BillingHandlerModel
             {
                 ClientId = clientId,
-                IdentificationId = identificationResponce.Data.IdentificationId,
-                MethodId = methodInfoResponce.Data.MethodId,
+                MethodName = MethodConstants.SuggestionMethodName,
                 CurrentDate = DateTime.UtcNow
             });
+
             if (!billingResponce.IsSuccess)
             {
-                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<ProxyRequest, string>
+                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
                 {
                     ErrorMessage = billingResponce.ErrorMessage,
                     IsSuccess = billingResponce.IsSuccess,
                     StatusCode = billingResponce.StatusCode,
-                    RequestData = request
+                    RequestData = requestContent
                 }));
+
                 return StatusCode(billingResponce.StatusCode, billingResponce.ErrorMessage);
             }
+
+            var request = new ProxyRequest
+            {
+                RequestMethodName = MethodConstants.SuggestionMethodName,
+                Method = HttpMethod.Post,
+                RequestPath = HttpContext.Request.Path,
+                Body = requestContent
+            };
 
             var proxyResponce = await _mediator.Send(request);
             if (!proxyResponce.IsSuccess)
             {
-                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<ProxyRequest, string>
+                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
                 {
                     ErrorMessage = proxyResponce.ErrorMessage,
                     IsSuccess = proxyResponce.IsSuccess,
                     StatusCode = proxyResponce.StatusCode,
-                    RequestData = request
+                    RequestData = requestContent
                 }));
                 return StatusCode(proxyResponce.StatusCode, proxyResponce.ErrorMessage);
             }
 
-            _requestLogger.LogInformation(JsonConvert.SerializeObject(new LoggingRequest<ProxyRequest, string>
+            _requestLogger.LogInformation(JsonConvert.SerializeObject(new LoggingRequest<string, string>
             {
                 ErrorMessage = proxyResponce.ErrorMessage,
                 IsSuccess = proxyResponce.IsSuccess,
                 StatusCode = proxyResponce.StatusCode,
-                RequestData = request,
+                RequestData = requestContent,
                 ResponseData = proxyResponce.Data
             }));
 

@@ -9,7 +9,7 @@
 
             try
             {
-                errorResponseMessage = await httpResponse.Content.ReadAsStringAsync();
+                errorResponseMessage = await httpResponse.Content?.ReadAsStringAsync();
             }
             catch { }
 

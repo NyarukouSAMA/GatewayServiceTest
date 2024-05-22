@@ -3,7 +3,7 @@ using MediatR;
 
 namespace ExtService.GateWay.API.Models.ServiceRequests
 {
-    public class ProxyRequest : IRequest<ServiceResponse<HttpResponseMessage>>
+    public class ProxyRequest : IRequest<ServiceResponse<string>>
     {
         public HttpMethod Method { get; set; }
         public string RequestMethodName { get; set; }

@@ -1,5 +1,6 @@
 ﻿using ExtService.GateWay.API.Abstractions.Repositories;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
+using ExtService.GateWay.DBContext;
 
 namespace ExtService.GateWay.API.Utilities.DBUtils
 {

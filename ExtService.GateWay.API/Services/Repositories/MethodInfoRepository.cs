@@ -1,8 +1,8 @@
 ﻿using ExtService.GateWay.API.Abstractions.Repositories;
-using ExtService.GateWay.API.Models.DBModels;
-using ExtService.GateWay.API.Utilities.DBUtils;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using ExtService.GateWay.DBContext;
+using ExtService.GateWay.DBContext.DBModels;
 
 namespace ExtService.GateWay.API.Services.Repositories
 {

@@ -1,8 +1,8 @@
 ﻿using ExtService.GateWay.API.Abstractions.Repositories;
-using ExtService.GateWay.API.Models.DBModels;
-using ExtService.GateWay.API.Utilities.DBUtils;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using ExtService.GateWay.DBContext;
+using ExtService.GateWay.DBContext.DBModels;
 
 namespace ExtService.GateWay.API.Services.Repositories
 {
@@ -14,9 +14,9 @@ namespace ExtService.GateWay.API.Services.Repositories
             _gateWayContext = gateWayContext;
         }
 
-        public async Task<Identification> RetrieveAsync(Expression<Func<Identification, bool>> criteria)
+        public Task<Identification> RetrieveAsync(Expression<Func<Identification, bool>> criteria)
         {
-            return await _gateWayContext?.IdentificationSet?.FirstOrDefaultAsync(criteria);
+            return _gateWayContext?.IdentificationSet?.FirstOrDefaultAsync(criteria);
         }
     }
 }

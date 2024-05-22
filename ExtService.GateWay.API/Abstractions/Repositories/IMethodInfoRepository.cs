@@ -1,4 +1,4 @@
-﻿using ExtService.GateWay.API.Models.DBModels;
+﻿using ExtService.GateWay.DBContext.DBModels;
 using System.Linq.Expressions;
 
 namespace ExtService.GateWay.API.Abstractions.Repositories

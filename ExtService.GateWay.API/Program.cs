@@ -28,9 +28,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Apply migrations
-MigrationManager.ApplyMigration(app.Services, app.Configuration);
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
