@@ -58,12 +58,12 @@ namespace ExtService.GateWay.API.Services.SBilling
                 }
 
                 var result = await _connection.ExecuteAsync($@"
-UPDATE Billing
-SET RequestCount = RequestCount + 1
-WHERE IdentificationId = @IdentificationId
-    AND MethodId = @MethodId
-    AND @CurrentDate BETWEEN StartDate AND EndDate
-    AND RequestCount < RequestLimit
+UPDATE public.""Billing"" b
+SET ""RequestCount"" = ""RequestCount"" + 1
+WHERE b.""IdentificationId"" = @IdentificationId
+  AND b.""MethodId"" = @MethodId
+  AND @CurrentDate BETWEEN b.""StartDate"" AND b.""EndDate""
+  AND b.""RequestCount"" < b.""RequestLimit"";
 ",
                 new { request.IdentificationId, request.MethodId, request.CurrentDate });
 

@@ -55,11 +55,12 @@ namespace ExtService.GateWay.Tests.Controllers
         public async Task Proxy_ShouldReturnStatusCode_WhenBillingFails()
         {
             // Arrange
-            var context = new DefaultHttpContext();
-            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("test request content"));
             var claimsIdentity = new ClaimsIdentity(new[] { new Claim("azp", "testClientId") });
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            _controller.ControllerContext.HttpContext = new DefaultHttpContext { User = claimsPrincipal };
+            var context = new DefaultHttpContext { User = claimsPrincipal };
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("test request content"));
+            context.Request.Body.Position = 0;
+            _controller.ControllerContext.HttpContext = context;
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<BillingHandlerModel>(), default))
                 .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = false, StatusCode = 400, ErrorMessage = "Billing error" });
@@ -77,11 +78,12 @@ namespace ExtService.GateWay.Tests.Controllers
         public async Task Proxy_ShouldReturnOk_WhenAllProcessesSucceed()
         {
             // Arrange
-            var context = new DefaultHttpContext();
-            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("test request content"));
             var claimsIdentity = new ClaimsIdentity(new[] { new Claim("azp", "testClientId") });
             var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-            _controller.ControllerContext.HttpContext = new DefaultHttpContext { User = claimsPrincipal };
+            var context = new DefaultHttpContext { User = claimsPrincipal };
+            context.Request.Body = new MemoryStream(Encoding.UTF8.GetBytes("test request content"));
+            context.Request.Body.Position = 0;
+            _controller.ControllerContext.HttpContext = context;
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<BillingHandlerModel>(), default))
                 .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = true });

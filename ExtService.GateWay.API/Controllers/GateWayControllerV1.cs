@@ -31,14 +31,18 @@ namespace ExtService.GateWay.API.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Proxy()
         {
-            string requestContent = await new StreamReader(Request.Body).ReadToEndAsync();
-
-            //var clientId = "testClientId";
             var clientId = User.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
             if (string.IsNullOrEmpty(clientId))
             {
                 _logger.LogError("Client id not found in token.");
                 return Unauthorized();
+            }
+
+            string requestContent = await new StreamReader(Request.Body).ReadToEndAsync();
+            if (string.IsNullOrEmpty(requestContent))
+            {
+                _logger.LogError("Request body is empty.");
+                return BadRequest("Request body is empty.");
             }
 
             var billingResponce = await _mediator.Send(new BillingHandlerModel

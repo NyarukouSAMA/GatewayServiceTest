@@ -8,6 +8,7 @@ EXPOSE 443
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["ExtService.GateWay.API/ExtService.GateWay.API.csproj", "ExtService.GateWay.API/"]
+COPY ["ExtService.GateWay.DBContext/ExtService.GateWay.DBContext.csproj", "ExtService.GateWay.DBContext/"]
 RUN dotnet restore "ExtService.GateWay.API/ExtService.GateWay.API.csproj"
 COPY . .
 WORKDIR "/src/ExtService.GateWay.API"

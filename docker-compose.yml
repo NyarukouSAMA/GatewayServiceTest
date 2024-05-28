@@ -1,0 +1,72 @@
+version: '3.4'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    command: postgres -c 'max_connections=200'
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./pgInit.sql:/docker-entrypoint-initdb.d/10-init.sql
+    networks:
+      - app-network
+  
+  keycloak:
+    image: quay.io/keycloak/keycloak:23.0.2
+    container_name: keycloak
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME_STRICT: 'false'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+
+      KC_LOG_LEVEL: info
+      KC_METRICS_ENABLED: 'true'
+      KC_HEALTH_ENABLED: 'true'
+    volumes:
+      - ./realm.json:/opt/keycloak/data/import/realm.json
+    command:
+      - start-dev
+      - --import-realm
+    depends_on:
+      - postgres
+    ports:
+      - '8080:8080'
+    networks:
+      - app-network
+
+  extservice.gateway.api:
+    image: ${DOCKER_REGISTRY-}extservicegatewayapi
+    build:
+      context: .
+      dockerfile: ExtService.GateWay.API/Dockerfile
+    ports:
+      - "80"
+      - "443"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+    networks:
+      - app-network
+
+volumes:
+  postgres-data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge

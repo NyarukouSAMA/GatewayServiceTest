@@ -1,0 +1,21 @@
+{
+  "realm": "testrealm",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "testclient",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "testclientsecret",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ]
+    }
+  ]
+}

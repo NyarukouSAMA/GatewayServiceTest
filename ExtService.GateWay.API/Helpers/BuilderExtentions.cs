@@ -103,9 +103,12 @@ namespace ExtService.GateWay.API.Helpers
                         options.TokenValidationParameters = new TokenValidationParameters
                         {
                             ValidateIssuerSigningKey = true,
-                            IssuerSigningKey = BuildRSAKey("Test"),
+                            IssuerSigningKeyResolver = (token, securityToken, kid, validationParameters) => keyCloakKeyResolver.GetSigningKey(token, securityToken, kid, validationParameters),
                             ValidateIssuer = true,
-                            ValidIssuers = new[] { keyCloakOptions.KeyCloakRealmAuthority },
+                            ValidIssuers = new[] {
+                                "http://localhost:8080/realms/testrealm",
+                                "http://host.docker.internal:8080/realms/testrealm"
+                            },
                             ValidateAudience = false,
                             ValidateLifetime = false
                         };
@@ -164,8 +167,8 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddScoped<GetMethodByName>();
 
             // Register proxing strategies
-            builder.Services.AddScoped<ProxyMockup>();
-            builder.Services.AddScoped<ServiceProxing>();
+            builder.Services.AddTransient<ProxyMockup>();
+            builder.Services.AddTransient<ServiceProxing>();
 
             // Register factories
             builder.Services.AddSingleton<IBillingServiceFactory, BillingServiceFactory>();
