@@ -18,5 +18,5 @@ VALUES
 -- Insert data into Billing table
 INSERT INTO public."Billing" ("BillingId", "RequestLimit", "RequestCount", "StartDate", "EndDate", "IdentificationId", "MethodId")
 VALUES
-('bbd9a9f7-8344-4e9c-8e50-d0d8421dbf22', 100, 0, '2024-01-01', '2024-12-31', 'e1b4a9c5-bb28-4c8c-9f4a-4f56d8a1f6f3', 'c6c72f43-ec44-4d77-9fb8-1bbf7b6c7a9b'),
+('bbd9a9f7-8344-4e9c-8e50-d0d8421dbf22', 25, 0, '2024-01-01', '2024-12-31', 'e1b4a9c5-bb28-4c8c-9f4a-4f56d8a1f6f3', 'c6c72f43-ec44-4d77-9fb8-1bbf7b6c7a9b'),
 ('c2d3b19e-5c7a-4cb9-8bb7-61b4a3b5a7dd', 200, 0, '2024-01-01', '2024-12-31', 'e1b4a9c5-bb28-4c8c-9f4a-4f56d8a1f6f3', 'd2f4d5c2-3d8c-40b3-9467-fbf7056e2133');
