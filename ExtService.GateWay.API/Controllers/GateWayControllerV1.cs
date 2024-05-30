@@ -1,5 +1,7 @@
 ﻿using ExtService.GateWay.API.Constants;
+using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
+using ExtService.GateWay.API.Models.HandlerResponses;
 using ExtService.GateWay.API.Models.Logging;
 using ExtService.GateWay.API.Models.ServiceRequests;
 using MediatR;
@@ -45,10 +47,71 @@ namespace ExtService.GateWay.API.Controllers
                 return BadRequest("Request body is empty.");
             }
 
-            var billingResponce = await _mediator.Send(new BillingHandlerModel
+            var identificationResponce = await _mediator.Send(new IdentificationHandlerModel
             {
                 ClientId = clientId,
-                MethodName = MethodConstants.SuggestionMethodName,
+                MethodName = MethodConstants.SuggestionMethodName
+            });
+
+            if (!identificationResponce.IsSuccess)
+            {
+                _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                {
+                    ErrorMessage = identificationResponce.ErrorMessage,
+                    IsSuccess = identificationResponce.IsSuccess,
+                    StatusCode = identificationResponce.StatusCode,
+                    RequestData = requestContent
+                }));
+
+                return StatusCode(identificationResponce.StatusCode, identificationResponce.ErrorMessage);
+            }
+
+            bool ignoreCache = Request.Headers.TryGetValue("IgnoreCache", out var ignoreCacheValue)
+                && bool.TryParse(ignoreCacheValue, out var ignoreCacheParseResult)
+                && ignoreCacheParseResult;
+
+            if (!ignoreCache)
+            {
+                var getProxyCacheResult = await _mediator.Send(new GetProxyCacheHandlerModel
+                {
+                    KeyInput = requestContent,
+                    KeyPrefix = MethodConstants.SuggestionMethodName
+                });
+
+                if (!getProxyCacheResult.IsSuccess && getProxyCacheResult.StatusCode != StatusCodes.Status404NotFound)
+                {
+                    _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                    {
+                        ErrorMessage = getProxyCacheResult.ErrorMessage,
+                        IsSuccess = getProxyCacheResult.IsSuccess,
+                        StatusCode = getProxyCacheResult.StatusCode,
+                        RequestData = requestContent
+                    }));
+
+                    return StatusCode(getProxyCacheResult.StatusCode, getProxyCacheResult.ErrorMessage);
+                }
+
+                if (getProxyCacheResult.IsSuccess)
+                {
+                    _requestLogger.LogInformation(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                    {
+                        ErrorMessage = getProxyCacheResult.ErrorMessage,
+                        IsSuccess = getProxyCacheResult.IsSuccess,
+                        StatusCode = getProxyCacheResult.StatusCode,
+                        CacheHit = true,
+                        RequestData = requestContent,
+                        ResponseData = getProxyCacheResult.Data.ProxyResponse
+                    }));
+
+                    return Ok(getProxyCacheResult.Data.ProxyResponse);
+                }
+            }
+            
+            var billingResponce = await _mediator.Send(new BillingHandlerModel
+            {
+                IdentificationId = identificationResponce.Data.IdentificationId,
+                ClientId = clientId,
+                MethodId = identificationResponce.Data.MethodId,
                 CurrentDate = DateTime.UtcNow
             });
 
@@ -85,6 +148,8 @@ namespace ExtService.GateWay.API.Controllers
                 }));
                 return StatusCode(proxyResponce.StatusCode, proxyResponce.ErrorMessage);
             }
+
+            //There we need to save everything to cache
 
             _requestLogger.LogInformation(JsonConvert.SerializeObject(new LoggingRequest<string, string>
             {

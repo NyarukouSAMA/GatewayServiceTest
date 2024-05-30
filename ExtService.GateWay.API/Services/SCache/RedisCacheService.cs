@@ -11,11 +11,9 @@ namespace ExtService.GateWay.API.Services.SCache
         private readonly IDistributedCache _distributedCache;
         private readonly JsonSerializerSettings _serializerSettings;
         private readonly ILogger<RedisCacheService> _logger;
-        private readonly Func<string, string> _keyModifier;
 
         public RedisCacheService(IDistributedCache cache,
-            ILogger<RedisCacheService> logger,
-            Func<string, string> keyModifier = null)
+            ILogger<RedisCacheService> logger)
         {
             _distributedCache = cache;
             _serializerSettings = new JsonSerializerSettings
@@ -24,17 +22,17 @@ namespace ExtService.GateWay.API.Services.SCache
                 NullValueHandling = NullValueHandling.Ignore
             };
             _logger = logger;
-            _keyModifier = keyModifier;
         }
 
-        public async Task<ServiceResponse<TCachedData>> GetCachedDataAsync<TCachedData>(string keyInput)
+        public async Task<ServiceResponse<TCachedData>> GetCachedDataAsync<TCachedData>(string keyInput,
+            Func<string, string> keyModifyer = null)
         {
             try
             {
                 string key = string.Empty;
-                if (_keyModifier != null)
+                if (keyModifyer != null)
                 {
-                    key = keyInput.GenerateCacheKey(_keyModifier);
+                    key = keyInput.GenerateCacheKey(keyModifyer);
                 }
                 else
                 {
@@ -72,14 +70,15 @@ namespace ExtService.GateWay.API.Services.SCache
             }
         }
 
-        public async Task<ServiceResponse<string>> GetCachedDataAsync(string keyInput)
+        public async Task<ServiceResponse<string>> GetCachedDataAsync(string keyInput,
+            Func<string, string> keyModifyer = null)
         {
             try
             {
                 string key = string.Empty;
-                if (_keyModifier != null)
+                if (keyModifyer != null)
                 {
-                    key = keyInput.GenerateCacheKey(_keyModifier);
+                    key = keyInput.GenerateCacheKey(keyModifyer);
                 }
                 else
                 {
@@ -117,15 +116,18 @@ namespace ExtService.GateWay.API.Services.SCache
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpsertDataAsync<TCachedData>(string keyInput, TCachedData data, TimeSpan? expiration = null)
+        public async Task<ServiceResponse<bool>> UpsertDataAsync<TCachedData>(string keyInput,
+            TCachedData data,
+            Func<string, string> keyModifyer = null,
+            TimeSpan ? expiration = null)
         {
             try
             {
                 string key = string.Empty;
 
-                if (_keyModifier != null)
+                if (keyModifyer != null)
                 {
-                    key = keyInput.GenerateCacheKey(_keyModifier);
+                    key = keyInput.GenerateCacheKey(keyModifyer);
                 }
                 else
                 {
@@ -166,15 +168,18 @@ namespace ExtService.GateWay.API.Services.SCache
             }
         }
 
-        public async Task<ServiceResponse<bool>> UpsertDataAsync(string keyInput, string data, TimeSpan? expiration = null)
+        public async Task<ServiceResponse<bool>> UpsertDataAsync(string keyInput,
+            string data,
+            Func<string, string> keyModifyer = null,
+            TimeSpan ? expiration = null)
         {
             try
             {
                 string key = string.Empty;
 
-                if (_keyModifier != null)
+                if (keyModifyer != null)
                 {
-                    key = keyInput.GenerateCacheKey(_keyModifier);
+                    key = keyInput.GenerateCacheKey(keyModifyer);
                 }
                 else
                 {

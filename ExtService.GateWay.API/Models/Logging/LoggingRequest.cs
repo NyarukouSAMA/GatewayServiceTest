@@ -5,6 +5,7 @@
         public bool IsSuccess { get; set; }
         public int StatusCode { get; set; }
         public string ErrorMessage { get; set; }
+        public bool CacheHit { get; set; }
         public TRequest RequestData { get; set; }
         public TResponse ResponseData { get; set; }
     }
