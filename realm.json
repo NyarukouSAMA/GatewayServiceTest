@@ -16,6 +16,21 @@
       "webOrigins": [
         "http://localhost:8080"
       ]
+    },
+    {
+      "clientId": "testclient2",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "testclientsecret2",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8080"
+      ]
     }
   ]
 }
