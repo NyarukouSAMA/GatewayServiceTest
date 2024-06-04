@@ -8,7 +8,7 @@
         //M-to-1 links
         public Guid SystemId { get; set; }
         public SystemInfo SystemInfo { get; set; }
-        public Guid BillingId { get; set; }
-        public Billing Billing { get; set; }
+        public Guid BillingConfigId { get; set; }
+        public BillingConfig BillingConfig { get; set; }
     }
 }

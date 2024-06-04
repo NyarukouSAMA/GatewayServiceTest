@@ -144,6 +144,7 @@ namespace ExtService.GateWay.API.Helpers
             });
 
             builder.Services.AddScoped<IIdentificationRepository, IdentificationRepository>();
+            builder.Services.AddScoped<IBillingConfigRepository, BillingConfigRepository>();
             builder.Services.AddScoped<IBillingRepository, BillingRepository>();
             builder.Services.AddScoped<IMethodInfoRepository, MethodInfoRepository>();
 

@@ -12,7 +12,7 @@
         public Identification Identification { get; set; }
         public Guid MethodId { get; set; }
         public MethodInfo Method { get; set; }
-        //1-to-M links
-        public ICollection<NotificationInfo> NotificationInfoSet { get; set; }
+        public Guid BillingConfigId { get; set; }
+        public BillingConfig BillingConfig { get; set; }
     }
 }

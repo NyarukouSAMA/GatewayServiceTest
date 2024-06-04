@@ -18,6 +18,7 @@ namespace ExtService.GateWay.DBContext
         public DbSet<SystemInfo> SystemInfoSet { get; set; }
         public DbSet<UserInfo> Users { get; set; }
         public DbSet<Identification> IdentificationSet { get; set; }
+        public DbSet<BillingConfig> BillingConfigSet { get; set; }
         public DbSet<Billing> BillingSet { get; set; }
         public DbSet<NotificationInfo> NotificationInfoSet { get; set; }
 
@@ -45,6 +46,9 @@ namespace ExtService.GateWay.DBContext
                 entity.HasKey(m => m.MethodId);
                 entity.Property(m => m.MethodName).IsRequired();
                 entity.HasMany(m => m.BillingSet)
+                    .WithOne(b => b.Method)
+                    .HasForeignKey(b => b.MethodId);
+                entity.HasMany(m => m.BillingConfigSet)
                     .WithOne(b => b.Method)
                     .HasForeignKey(b => b.MethodId);
             });
@@ -83,6 +87,27 @@ namespace ExtService.GateWay.DBContext
                 entity.HasMany(i => i.BillingSet)
                     .WithOne(b => b.Identification)
                     .HasForeignKey(b => b.IdentificationId);
+                entity.HasMany(i => i.BillingConfigSet)
+                    .WithOne(b => b.Identification)
+                    .HasForeignKey(b => b.IdentificationId);
+            });
+
+            modelBuilder.Entity<BillingConfig>(entity =>
+            {
+                entity.ToTable("BillingConfig");
+                entity.HasKey(b => b.BillingConfigId);
+                entity.HasOne(b => b.Identification)
+                    .WithMany(i => i.BillingConfigSet)
+                    .HasForeignKey(b => b.IdentificationId);
+                entity.HasOne(b => b.Method)
+                    .WithMany(m => m.BillingConfigSet)
+                    .HasForeignKey(b => b.MethodId);
+                entity.HasMany(b => b.NotificationInfoSet)
+                    .WithOne(n => n.BillingConfig)
+                    .HasForeignKey(n => n.BillingConfigId);
+                entity.HasMany(b => b.BillingRecords)
+                    .WithOne(b => b.BillingConfig)
+                    .HasForeignKey(b => b.BillingConfigId);
             });
 
             modelBuilder.Entity<Billing>(entity =>
@@ -95,9 +120,10 @@ namespace ExtService.GateWay.DBContext
                 entity.HasOne(b => b.Method)
                     .WithMany(m => m.BillingSet)
                     .HasForeignKey(b => b.MethodId);
-                entity.HasMany(b => b.NotificationInfoSet)
-                    .WithOne(n => n.Billing)
-                    .HasForeignKey(n => n.BillingId);
+                entity.HasOne(b => b.BillingConfig)
+                    .WithMany(b => b.BillingRecords)
+                    .HasForeignKey(b => b.BillingConfigId);
+                entity.HasAlternateKey(b => new { b.BillingConfigId, b.StartDate, b.EndDate });
             });
 
             modelBuilder.Entity<NotificationInfo>(entity =>
@@ -107,9 +133,9 @@ namespace ExtService.GateWay.DBContext
                 entity.HasOne(n => n.SystemInfo)
                     .WithMany(s => s.NotificationInfoSet)
                     .HasForeignKey(n => n.SystemId);
-                entity.HasOne(n => n.Billing)
+                entity.HasOne(n => n.BillingConfig)
                     .WithMany(b => b.NotificationInfoSet)
-                    .HasForeignKey(n => n.BillingId);
+                    .HasForeignKey(n => n.BillingConfigId);
             });
         }
 

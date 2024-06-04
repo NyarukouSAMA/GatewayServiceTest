@@ -13,6 +13,12 @@ namespace ExtService.GateWay.API.Services.Repositories
         {
             _gateWayContext = gateWayContext;
         }
+        public async Task<int> InsertAsync(Billing billing)
+        {
+            _gateWayContext?.BillingSet?.Add(billing);
+
+            return await _gateWayContext?.SaveChangesAsync();
+        }
 
         public Task<Billing> RetrieveAsync(Expression<Func<Billing, bool>> criteria)
         {

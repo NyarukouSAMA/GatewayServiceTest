@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExtService.GateWay.DBContext.Migrations
 {
     [DbContext(typeof(GateWayContext))]
-    [Migration("20240522151731_InitialCreate")]
+    [Migration("20240604113417_InitialCreate")]
     partial class InitialCreate
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -28,6 +28,9 @@ namespace ExtService.GateWay.DBContext.Migrations
                 {
                     b.Property<Guid>("BillingId")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BillingConfigId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime>("EndDate")
@@ -50,11 +53,46 @@ namespace ExtService.GateWay.DBContext.Migrations
 
                     b.HasKey("BillingId");
 
+                    b.HasAlternateKey("BillingConfigId", "StartDate", "EndDate");
+
                     b.HasIndex("IdentificationId");
 
                     b.HasIndex("MethodId");
 
                     b.ToTable("Billing", (string)null);
+                });
+
+            modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.BillingConfig", b =>
+                {
+                    b.Property<Guid>("BillingConfigId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IdentificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("MethodId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("PeriodInDays")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RequestLimitPerPeriod")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("BillingConfigId");
+
+                    b.HasIndex("IdentificationId");
+
+                    b.HasIndex("MethodId");
+
+                    b.ToTable("BillingConfig", (string)null);
                 });
 
             modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.Identification", b =>
@@ -102,7 +140,7 @@ namespace ExtService.GateWay.DBContext.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("BillingId")
+                    b.Property<Guid>("BillingConfigId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Message")
@@ -117,7 +155,7 @@ namespace ExtService.GateWay.DBContext.Migrations
 
                     b.HasKey("NotificationId");
 
-                    b.HasIndex("BillingId");
+                    b.HasIndex("BillingConfigId");
 
                     b.HasIndex("SystemId");
 
@@ -176,6 +214,12 @@ namespace ExtService.GateWay.DBContext.Migrations
 
             modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.Billing", b =>
                 {
+                    b.HasOne("ExtService.GateWay.DBContext.DBModels.BillingConfig", "BillingConfig")
+                        .WithMany("BillingRecords")
+                        .HasForeignKey("BillingConfigId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ExtService.GateWay.DBContext.DBModels.Identification", "Identification")
                         .WithMany("BillingSet")
                         .HasForeignKey("IdentificationId")
@@ -184,6 +228,27 @@ namespace ExtService.GateWay.DBContext.Migrations
 
                     b.HasOne("ExtService.GateWay.DBContext.DBModels.MethodInfo", "Method")
                         .WithMany("BillingSet")
+                        .HasForeignKey("MethodId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BillingConfig");
+
+                    b.Navigation("Identification");
+
+                    b.Navigation("Method");
+                });
+
+            modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.BillingConfig", b =>
+                {
+                    b.HasOne("ExtService.GateWay.DBContext.DBModels.Identification", "Identification")
+                        .WithMany("BillingConfigSet")
+                        .HasForeignKey("IdentificationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ExtService.GateWay.DBContext.DBModels.MethodInfo", "Method")
+                        .WithMany("BillingConfigSet")
                         .HasForeignKey("MethodId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -206,9 +271,9 @@ namespace ExtService.GateWay.DBContext.Migrations
 
             modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.NotificationInfo", b =>
                 {
-                    b.HasOne("ExtService.GateWay.DBContext.DBModels.Billing", "Billing")
+                    b.HasOne("ExtService.GateWay.DBContext.DBModels.BillingConfig", "BillingConfig")
                         .WithMany("NotificationInfoSet")
-                        .HasForeignKey("BillingId")
+                        .HasForeignKey("BillingConfigId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -218,7 +283,7 @@ namespace ExtService.GateWay.DBContext.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Billing");
+                    b.Navigation("BillingConfig");
 
                     b.Navigation("SystemInfo");
                 });
@@ -234,18 +299,24 @@ namespace ExtService.GateWay.DBContext.Migrations
                     b.Navigation("SystemInfo");
                 });
 
-            modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.Billing", b =>
+            modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.BillingConfig", b =>
                 {
+                    b.Navigation("BillingRecords");
+
                     b.Navigation("NotificationInfoSet");
                 });
 
             modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.Identification", b =>
                 {
+                    b.Navigation("BillingConfigSet");
+
                     b.Navigation("BillingSet");
                 });
 
             modelBuilder.Entity("ExtService.GateWay.DBContext.DBModels.MethodInfo", b =>
                 {
+                    b.Navigation("BillingConfigSet");
+
                     b.Navigation("BillingSet");
                 });
 

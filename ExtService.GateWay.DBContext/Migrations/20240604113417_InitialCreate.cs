@@ -77,6 +77,35 @@ namespace ExtService.GateWay.DBContext.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BillingConfig",
+                columns: table => new
+                {
+                    BillingConfigId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PeriodInDays = table.Column<int>(type: "integer", nullable: false),
+                    RequestLimitPerPeriod = table.Column<int>(type: "integer", nullable: false),
+                    StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    IdentificationId = table.Column<Guid>(type: "uuid", nullable: false),
+                    MethodId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BillingConfig", x => x.BillingConfigId);
+                    table.ForeignKey(
+                        name: "FK_BillingConfig_Identification_IdentificationId",
+                        column: x => x.IdentificationId,
+                        principalTable: "Identification",
+                        principalColumn: "IdentificationId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BillingConfig_MethodInfo_MethodId",
+                        column: x => x.MethodId,
+                        principalTable: "MethodInfo",
+                        principalColumn: "MethodId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Billing",
                 columns: table => new
                 {
@@ -86,11 +115,19 @@ namespace ExtService.GateWay.DBContext.Migrations
                     StartDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     EndDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IdentificationId = table.Column<Guid>(type: "uuid", nullable: false),
-                    MethodId = table.Column<Guid>(type: "uuid", nullable: false)
+                    MethodId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BillingConfigId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Billing", x => x.BillingId);
+                    table.UniqueConstraint("AK_Billing_BillingConfigId_StartDate_EndDate", x => new { x.BillingConfigId, x.StartDate, x.EndDate });
+                    table.ForeignKey(
+                        name: "FK_Billing_BillingConfig_BillingConfigId",
+                        column: x => x.BillingConfigId,
+                        principalTable: "BillingConfig",
+                        principalColumn: "BillingConfigId",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Billing_Identification_IdentificationId",
                         column: x => x.IdentificationId,
@@ -113,16 +150,16 @@ namespace ExtService.GateWay.DBContext.Migrations
                     NotificationLimitPercentage = table.Column<int>(type: "integer", nullable: false),
                     Message = table.Column<string>(type: "text", nullable: false),
                     SystemId = table.Column<Guid>(type: "uuid", nullable: false),
-                    BillingId = table.Column<Guid>(type: "uuid", nullable: false)
+                    BillingConfigId = table.Column<Guid>(type: "uuid", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NotificationInfo", x => x.NotificationId);
                     table.ForeignKey(
-                        name: "FK_NotificationInfo_Billing_BillingId",
-                        column: x => x.BillingId,
-                        principalTable: "Billing",
-                        principalColumn: "BillingId",
+                        name: "FK_NotificationInfo_BillingConfig_BillingConfigId",
+                        column: x => x.BillingConfigId,
+                        principalTable: "BillingConfig",
+                        principalColumn: "BillingConfigId",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_NotificationInfo_SystemInfo_SystemId",
@@ -143,14 +180,24 @@ namespace ExtService.GateWay.DBContext.Migrations
                 column: "MethodId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BillingConfig_IdentificationId",
+                table: "BillingConfig",
+                column: "IdentificationId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BillingConfig_MethodId",
+                table: "BillingConfig",
+                column: "MethodId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Identification_SystemId",
                 table: "Identification",
                 column: "SystemId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_NotificationInfo_BillingId",
+                name: "IX_NotificationInfo_BillingConfigId",
                 table: "NotificationInfo",
-                column: "BillingId");
+                column: "BillingConfigId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_NotificationInfo_SystemId",
@@ -166,13 +213,16 @@ namespace ExtService.GateWay.DBContext.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
+                name: "Billing");
+
+            migrationBuilder.DropTable(
                 name: "NotificationInfo");
 
             migrationBuilder.DropTable(
                 name: "UserInfo");
 
             migrationBuilder.DropTable(
-                name: "Billing");
+                name: "BillingConfig");
 
             migrationBuilder.DropTable(
                 name: "Identification");

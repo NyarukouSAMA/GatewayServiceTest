@@ -9,6 +9,7 @@
         public Guid SystemId { get; set; }
         public SystemInfo SystemInfo { get; set; }
         //1-to-M links
+        public ICollection<BillingConfig> BillingConfigSet { get; set; }
         public ICollection<Billing> BillingSet { get; set; }
     }
 }
