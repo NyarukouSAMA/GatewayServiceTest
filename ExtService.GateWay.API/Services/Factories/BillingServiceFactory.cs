@@ -36,7 +36,7 @@ namespace ExtService.GateWay.API.Services.Factories
             }
             else
             {
-                return scopedProvider.GetRequiredService<CheckAndIncrementCounter>();
+                return scopedProvider.GetRequiredService<BillingService>();
             }
         }
     }

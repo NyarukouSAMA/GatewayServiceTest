@@ -1,7 +1,9 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
 using ExtService.GateWay.API.Abstractions.Services;
+using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Models.Options;
 using ExtService.GateWay.API.Services.SProxing;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace ExtService.GateWay.API.Services.Factories
@@ -20,11 +22,11 @@ namespace ExtService.GateWay.API.Services.Factories
         {
             if (_mockupOptions.ProxyMockup)
             {
-                return _serviceProvider.GetRequiredService<ProxyMockup>();
+                return _serviceProvider.GetRequiredKeyedService<IProxingService>(ServiceNames.ProxingMockupName);
             }
             else
             {
-                return _serviceProvider.GetRequiredService<ServiceProxing>();
+                return _serviceProvider.GetRequiredKeyedService<IProxingService>(ServiceNames.ProxingServiceName);
             }
         }
     }

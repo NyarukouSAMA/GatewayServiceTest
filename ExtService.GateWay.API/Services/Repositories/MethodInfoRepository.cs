@@ -15,9 +15,20 @@ namespace ExtService.GateWay.API.Services.Repositories
             _gateWayContext = gateWayContext;
         }
 
-        public async Task<MethodInfo> RetrieveAsync(Expression<Func<MethodInfo, bool>> criteria)
+        public async Task<MethodInfo> RetrieveAsync(Expression<Func<MethodInfo, bool>> criteria,
+            Expression<Func<MethodInfo, object>>[] includes = null)
         {
-            return await _gateWayContext?.MethodInfoSet?.FirstOrDefaultAsync(criteria);
+            IQueryable<MethodInfo> query = _gateWayContext?.MethodInfoSet;
+
+            if (includes != null)
+            {
+                foreach (var include in includes)
+                {
+                    query = query?.Include(include);
+                }
+            }
+
+            return await query?.FirstOrDefaultAsync(criteria);
         }
     }
 }

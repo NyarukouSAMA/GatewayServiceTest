@@ -10,15 +10,15 @@ using System.Data;
 
 namespace ExtService.GateWay.API.Services.SBilling
 {
-    public class CheckAndIncrementCounter : IBillingService
+    public class BillingService : IBillingService
     {
         private readonly IDBManager _dbManager;
         private readonly IDbConnection _connection;
-        private readonly ILogger<CheckAndIncrementCounter> _logger;
+        private readonly ILogger<BillingService> _logger;
 
-        public CheckAndIncrementCounter(IDBManager dbManager,
+        public BillingService(IDBManager dbManager,
             IDbConnection dbConnection,
-            ILogger<CheckAndIncrementCounter> logger)
+            ILogger<BillingService> logger)
         {
             _dbManager = dbManager;
             _connection = dbConnection;
@@ -58,6 +58,18 @@ namespace ExtService.GateWay.API.Services.SBilling
                     if (billingConfig == null)
                     {
                         string errorMessage = $"Биллинговая запись с параметрами clientId: \"{request.ClientId}\" and methodId: \"{request.MethodId}\" не сконфигурирована.";
+                        _logger.LogError(errorMessage);
+                        return new ServiceResponse<bool>
+                        {
+                            IsSuccess = false,
+                            StatusCode = StatusCodes.Status404NotFound,
+                            ErrorMessage = errorMessage
+                        };
+                    }
+
+                    if (billingConfig.RequestLimitPerPeriod <= 0)
+                    {
+                        string errorMessage = $"Лимит запросов для clientId: \"{request.ClientId}\" по методу methodId: \"{request.MethodId}\" не сконфигурирован.";
                         _logger.LogError(errorMessage);
                         return new ServiceResponse<bool>
                         {

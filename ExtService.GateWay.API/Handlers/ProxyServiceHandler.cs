@@ -6,7 +6,7 @@ using MediatR;
 
 namespace ExtService.GateWay.API.Handlers
 {
-    public class ProxyServiceHandler : IRequestHandler<ProxyRequest, ServiceResponse<string>>
+    public class ProxyServiceHandler : IRequestHandler<ProxyRequest, ServiceResponse<HttpContent>>
     {
         private readonly IProxingServiceFactory _proxingStrategyFactory;
         private readonly ILogger<ProxyServiceHandler> _logger;
@@ -17,7 +17,7 @@ namespace ExtService.GateWay.API.Handlers
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<string>> Handle(ProxyRequest request, CancellationToken cancellationToken)
+        public async Task<ServiceResponse<HttpContent>> Handle(ProxyRequest request, CancellationToken cancellationToken)
         {
             try
             {
@@ -28,9 +28,8 @@ namespace ExtService.GateWay.API.Handlers
                 string headerMessage = "Во время проксирования запроса возникла непредвиденная ошибка.";
                 _logger.LogError(ex, headerMessage);
 
-                return new ServiceResponse<string>
+                return new ServiceResponse<HttpContent>
                 {
-                    Data = string.Empty,
                     StatusCode = StatusCodes.Status500InternalServerError,
                     IsSuccess = false,
                     ErrorMessage = ex.BuildExceptionMessage(headerMessage)

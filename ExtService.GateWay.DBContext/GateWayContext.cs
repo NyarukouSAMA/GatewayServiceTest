@@ -15,6 +15,8 @@ namespace ExtService.GateWay.DBContext
         }
 
         public DbSet<MethodInfo> MethodInfoSet { get; set; }
+        public DbSet<MethodHeaders> MethodHeadersSet { get; set; }
+        public DbSet<SubMethodInfo> SubMethodInfoSet { get; set; }
         public DbSet<SystemInfo> SystemInfoSet { get; set; }
         public DbSet<UserInfo> Users { get; set; }
         public DbSet<Identification> IdentificationSet { get; set; }
@@ -40,23 +42,52 @@ namespace ExtService.GateWay.DBContext
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.HasPostgresExtension("uuid-ossp");
+
             modelBuilder.Entity<MethodInfo>(entity =>
             {
-                entity.ToTable("MethodInfo");
-                entity.HasKey(m => m.MethodId);
-                entity.Property(m => m.MethodName).IsRequired();
+                entity.Property(m => m.MethodId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
                 entity.HasMany(m => m.BillingSet)
                     .WithOne(b => b.Method)
                     .HasForeignKey(b => b.MethodId);
                 entity.HasMany(m => m.BillingConfigSet)
                     .WithOne(b => b.Method)
                     .HasForeignKey(b => b.MethodId);
+                entity.HasMany(m => m.SubMethodInfoSet)
+                    .WithOne(s => s.Method)
+                    .HasForeignKey(s => s.MethodId);
+                entity.HasMany(m => m.MethodHeaders)
+                    .WithOne(h => h.Method)
+                    .HasForeignKey(h => h.MethodId);
+            });
+
+            modelBuilder.Entity<MethodHeaders>(entity =>
+            {
+                entity.Property(h => h.MethodHeaderId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasOne(h => h.Method)
+                    .WithMany(m => m.MethodHeaders)
+                    .HasForeignKey(h => h.MethodId);
+            });
+
+            modelBuilder.Entity<SubMethodInfo>(entity =>
+            {
+                entity.Property(s => s.SubMethodId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasOne(s => s.Method)
+                    .WithMany(m => m.SubMethodInfoSet)
+                    .HasForeignKey(s => s.MethodId);
             });
 
             modelBuilder.Entity<SystemInfo>(entity =>
             {
-                entity.ToTable("SystemInfo");
-                entity.HasKey(s => s.SystemId);
+                entity.Property(s => s.SystemId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
                 entity.HasMany(s => s.Users)
                     .WithOne(u => u.SystemInfo)
                     .HasForeignKey(u => u.SystemId);
@@ -70,8 +101,9 @@ namespace ExtService.GateWay.DBContext
 
             modelBuilder.Entity<UserInfo>(entity =>
             {
-                entity.ToTable("UserInfo");
-                entity.HasKey(u => u.UserId);
+                entity.Property(u => u.UserId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
                 entity.HasOne(u => u.SystemInfo)
                     .WithMany(s => s.Users)
                     .HasForeignKey(u => u.SystemId);
@@ -79,8 +111,9 @@ namespace ExtService.GateWay.DBContext
 
             modelBuilder.Entity<Identification>(entity =>
             {
-                entity.ToTable("Identification");
-                entity.HasKey(i => i.IdentificationId);
+                entity.Property(i => i.IdentificationId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
                 entity.HasOne(i => i.SystemInfo)
                     .WithMany(s => s.IdentificationSet)
                     .HasForeignKey(i => i.SystemId);
@@ -94,8 +127,12 @@ namespace ExtService.GateWay.DBContext
 
             modelBuilder.Entity<BillingConfig>(entity =>
             {
-                entity.ToTable("BillingConfig");
-                entity.HasKey(b => b.BillingConfigId);
+                entity.Property(b => b.BillingConfigId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasCheckConstraint("CK_PeriodInDays_Greater_Than_Zero", "\"PeriodInDays\" > 0");
+                entity.HasCheckConstraint("CK_RequestLimitPerPeriod_Greater_Than_Zero", "\"RequestLimitPerPeriod\" > 0");
+                entity.HasCheckConstraint("CK_StartDate_Less_Than_EndDate", "\"StartDate\" < \"EndDate\"");
                 entity.HasOne(b => b.Identification)
                     .WithMany(i => i.BillingConfigSet)
                     .HasForeignKey(b => b.IdentificationId);
@@ -112,8 +149,12 @@ namespace ExtService.GateWay.DBContext
 
             modelBuilder.Entity<Billing>(entity =>
             {
-                entity.ToTable("Billing");
-                entity.HasKey(b => b.BillingId);
+                entity.Property(b => b.BillingId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasCheckConstraint("CK_RequestLimit_Greater_Than_Zero", "\"RequestLimit\" > 0");
+                entity.HasCheckConstraint("CK_RequestCount_GTE_Zero", "\"RequestCount\" >= 0");
+                entity.HasCheckConstraint("CK_StartDate_Less_Than_EndDate", "\"StartDate\" < \"EndDate\"");
                 entity.HasOne(b => b.Identification)
                     .WithMany(i => i.BillingSet)
                     .HasForeignKey(b => b.IdentificationId);
@@ -128,8 +169,10 @@ namespace ExtService.GateWay.DBContext
 
             modelBuilder.Entity<NotificationInfo>(entity =>
             {
-                entity.ToTable("NotificationInfo");
-                entity.HasKey(n => n.NotificationId);
+                entity.Property(n => n.NotificationId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasCheckConstraint("CK_NotificationLimitPercentage_Range", "\"NotificationLimitPercentage\" > 0 AND \"NotificationLimitPercentage\" < 100");
                 entity.HasOne(n => n.SystemInfo)
                     .WithMany(s => s.NotificationInfoSet)
                     .HasForeignKey(n => n.SystemId);

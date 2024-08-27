@@ -23,6 +23,8 @@ using Serilog.Settings.Configuration;
 using System.Data;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using ExtService.GateWay.API.Abstractions.Services;
+using Microsoft.OpenApi.Models;
 
 namespace ExtService.GateWay.API.Helpers
 {
@@ -53,31 +55,6 @@ namespace ExtService.GateWay.API.Helpers
 
             builder.Logging.AddProvider(new RequestLogProvider(requestLogLogger))
                 .AddFilter<RequestLogProvider>((category, level) => category == LoggingConstants.RequestLogCategory);
-
-            return builder;
-        }
-
-        public static WebApplicationBuilder RegisterHttpServices(this WebApplicationBuilder builder)
-        {
-            builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-
-            var proxyOptions = builder.Configuration.GetSection(ProxyOptions.ProxyOptionsSection).Get<ProxyOptions>();
-
-            builder.Services.AddHttpClient(HTTPConstants.SuggestionApiClientName, client =>
-            {
-                client.BaseAddress = new Uri(proxyOptions.SuggestionApiBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(proxyOptions.SuggestionApiTimeoutInSeconds);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", proxyOptions.SuggestionApiToken);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            });
-
-            builder.Services.AddHttpClient(HTTPConstants.CleanerApiClientName, client =>
-            {
-                client.BaseAddress = new Uri(proxyOptions.CleanerApiBaseUrl);
-                client.Timeout = TimeSpan.FromSeconds(proxyOptions.CleanerApiTimeoutInSeconds);
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Token", proxyOptions.CleanerApiToken);
-                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            });
 
             return builder;
         }
@@ -156,20 +133,20 @@ namespace ExtService.GateWay.API.Helpers
         public static WebApplicationBuilder RegisterMediatR(this WebApplicationBuilder builder)
         {
             // Register billing handler strategies
-            builder.Services.AddScoped<CheckAndIncrementCounter>();
+            builder.Services.AddScoped<BillingService>();
             builder.Services.AddScoped<BillingServiceMockup>();
 
             // Register client identification strategies
             builder.Services.AddScoped<ClientIdentificationMockup>();
-            builder.Services.AddScoped<CheckUserByClientId>();
+            builder.Services.AddScoped<ClientIdentificationService>();
 
             // Register search method strategies
             builder.Services.AddScoped<MethodInfoMockup>();
-            builder.Services.AddScoped<GetMethodByName>();
+            builder.Services.AddScoped<MethodInfoService>();
 
             // Register proxing strategies
-            builder.Services.AddTransient<ProxyMockup>();
-            builder.Services.AddTransient<ServiceProxing>();
+            builder.Services.AddKeyedTransient<IProxingService, ProxyMockup>(ServiceNames.ProxingMockupName);
+            builder.Services.AddKeyedTransient<IProxingService, ServiceProxing>(ServiceNames.ProxingServiceName);
 
             // Register factories
             builder.Services.AddSingleton<IBillingServiceFactory, BillingServiceFactory>();
@@ -179,6 +156,43 @@ namespace ExtService.GateWay.API.Helpers
 
             // Register handlers
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+            return builder;
+        }
+
+        public static WebApplicationBuilder ConfigureSwaggerGen(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddSwaggerGen(opt =>
+            {
+                opt.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "ExtService.GateWay.API",
+                    Version = "v1"
+                });
+                opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Please insert JWT with Bearer into field",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = "bearer"
+                });
+                opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] { }
+                    }
+                });
+            });
+
             return builder;
         }
 

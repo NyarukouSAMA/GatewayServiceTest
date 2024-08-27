@@ -22,15 +22,15 @@ namespace ExtService.GateWay.Tests.Services
     {
         private readonly Mock<IDBManager> _mockDbManager;
         private readonly Mock<IDbConnection> _mockConnection;
-        private readonly Mock<ILogger<CheckAndIncrementCounter>> _mockLogger;
-        private readonly CheckAndIncrementCounter _service;
+        private readonly Mock<ILogger<BillingService>> _mockLogger;
+        private readonly BillingService _service;
 
         public CheckAndIncrementCounterTests()
         {
             _mockDbManager = new Mock<IDBManager>();
             _mockConnection = new Mock<IDbConnection>();
-            _mockLogger = new Mock<ILogger<CheckAndIncrementCounter>>();
-            _service = new CheckAndIncrementCounter(_mockDbManager.Object, _mockConnection.Object, _mockLogger.Object);
+            _mockLogger = new Mock<ILogger<BillingService>>();
+            _service = new BillingService(_mockDbManager.Object, _mockConnection.Object, _mockLogger.Object);
         }
 
         [Fact]

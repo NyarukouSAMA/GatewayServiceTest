@@ -6,13 +6,13 @@ namespace ExtService.GateWay.API.Services.SProxing
 {
     public class ProxyMockup : IProxingService
     {
-        public async Task<ServiceResponse<string>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken)
+        public Task<ServiceResponse<HttpContent>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken)
         {
-            return await Task.FromResult(new ServiceResponse<string>
+            return Task.FromResult(new ServiceResponse<HttpContent>
             {
-                Data = "Mockup response",
-                StatusCode = StatusCodes.Status200OK,
-                IsSuccess = true
+                StatusCode = 200,
+                IsSuccess = true,
+                Data = new StringContent("Mockup response")
             });
         }
     }

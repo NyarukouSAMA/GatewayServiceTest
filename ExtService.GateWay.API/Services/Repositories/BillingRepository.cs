@@ -16,7 +16,6 @@ namespace ExtService.GateWay.API.Services.Repositories
         public async Task<int> InsertAsync(Billing billing)
         {
             _gateWayContext?.BillingSet?.Add(billing);
-
             return await _gateWayContext?.SaveChangesAsync();
         }
 

@@ -8,18 +8,13 @@ namespace ExtService.GateWay.API.Handlers
 {
     public class BillingHandler : IRequestHandler<BillingHandlerModel, ServiceResponse<bool>>
     {
-        private readonly IClientIdentificationServiceFactory _clientIdentificationServiceFactory;
-        private readonly ISearchMethodServiceFactory _searchMethodServiceFactory;
+        
         private readonly IBillingServiceFactory _billingServiceFactory;
         private readonly ILogger<BillingHandler> _logger;
 
-        public BillingHandler(IClientIdentificationServiceFactory clientIdentificationServiceFactory,
-            ISearchMethodServiceFactory searchMethodServiceFactory,
-            IBillingServiceFactory billingServiceFactory,
+        public BillingHandler(IBillingServiceFactory billingServiceFactory,
             ILogger<BillingHandler> logger)
         {
-            _clientIdentificationServiceFactory = clientIdentificationServiceFactory;
-            _searchMethodServiceFactory = searchMethodServiceFactory;
             _billingServiceFactory = billingServiceFactory;
             _logger = logger;
         }
@@ -28,44 +23,12 @@ namespace ExtService.GateWay.API.Handlers
         {
             try
             {
-                var clientIdentificationService = _clientIdentificationServiceFactory.GetClientIdentificationService();
-                var clientIdentificationResult = await clientIdentificationService.IdentifyClientAsync(new ClientIdentificationRequest
-                {
-                    ClientId = request.ClientId
-                }, cancellationToken);
-
-                if (!clientIdentificationResult.IsSuccess)
-                {
-                    return new ServiceResponse<bool>
-                    {
-                        IsSuccess = false,
-                        StatusCode = clientIdentificationResult.StatusCode,
-                        ErrorMessage = clientIdentificationResult.ErrorMessage
-                    };
-                }
-
-                var searchMethodService = _searchMethodServiceFactory.GetMethodInfoService();
-                var searchMethodResult = await searchMethodService.GetMethodInfoAsync(new SearchMethodRequest
-                {
-                    MethodName = request.MethodName
-                }, cancellationToken);
-
-                if (!searchMethodResult.IsSuccess)
-                {
-                    return new ServiceResponse<bool>
-                    {
-                        IsSuccess = false,
-                        StatusCode = searchMethodResult.StatusCode,
-                        ErrorMessage = searchMethodResult.ErrorMessage
-                    };
-                }
-
                 var billingService = _billingServiceFactory.GetBillingService();
                 var billingResult = await billingService.UpdateBillingRecordAsync(new BillingRequest
                 {
-                    IdentificationId = clientIdentificationResult.Data.IdentificationId,
+                    IdentificationId = request.IdentificationId,
                     ClientId = request.ClientId,
-                    MethodId = searchMethodResult.Data.MethodId,
+                    MethodId = request.MethodId,
                     CurrentDate = request.CurrentDate
                 }, cancellationToken);
 
