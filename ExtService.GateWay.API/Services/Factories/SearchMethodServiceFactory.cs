@@ -37,7 +37,7 @@ namespace ExtService.GateWay.API.Services.Factories
             }
             else
             {
-                return scopedProvider.GetRequiredService<GetMethodByName>();
+                return scopedProvider.GetRequiredService<MethodInfoService>();
             }
         }
 

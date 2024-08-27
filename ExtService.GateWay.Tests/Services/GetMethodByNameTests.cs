@@ -18,14 +18,14 @@ namespace ExtService.GateWay.Tests.Services
     public class GetMethodByNameTests
     {
         private readonly Mock<IDBManager> _mockDbManager;
-        private readonly Mock<ILogger<GetMethodByName>> _mockLogger;
-        private readonly GetMethodByName _service;
+        private readonly Mock<ILogger<MethodInfoService>> _mockLogger;
+        private readonly MethodInfoService _service;
 
         public GetMethodByNameTests()
         {
             _mockDbManager = new Mock<IDBManager>();
-            _mockLogger = new Mock<ILogger<GetMethodByName>>();
-            _service = new GetMethodByName(_mockDbManager.Object, _mockLogger.Object);
+            _mockLogger = new Mock<ILogger<MethodInfoService>>();
+            _service = new MethodInfoService(_mockDbManager.Object, _mockLogger.Object);
         }
 
         [Fact]

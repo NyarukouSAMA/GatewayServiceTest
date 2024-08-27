@@ -7,13 +7,13 @@ using ExtService.GateWay.DBContext.DBModels;
 
 namespace ExtService.GateWay.API.Services.SClientIdentification
 {
-    public class CheckUserByClientId : IClientIdentificationService
+    public class ClientIdentificationService : IClientIdentificationService
     {
         private readonly IDBManager _dbManager;
-        private readonly ILogger<CheckUserByClientId> _logger;
+        private readonly ILogger<ClientIdentificationService> _logger;
 
-        public CheckUserByClientId(IDBManager dbManager,
-            ILogger<CheckUserByClientId> logger)
+        public ClientIdentificationService(IDBManager dbManager,
+            ILogger<ClientIdentificationService> logger)
         {
             _dbManager = dbManager;
             _logger = logger;
@@ -24,7 +24,11 @@ namespace ExtService.GateWay.API.Services.SClientIdentification
             try
             {
                 Identification identification = await _dbManager?.IdentificationRepository
-                    ?.RetrieveAsync(identification => identification.ClientId == clientIdentificationRequest.ClientId);
+                    ?.RetrieveAsync(identification => identification.ClientId == clientIdentificationRequest.ClientId,
+                    new System.Linq.Expressions.Expression<Func<Identification, object>>[]
+                    {
+                        identification => identification.SystemInfo
+                    });
 
                 if (identification == null)
                 {

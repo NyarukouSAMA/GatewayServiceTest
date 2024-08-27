@@ -8,18 +8,13 @@ namespace ExtService.GateWay.API.Handlers
 {
     public class BillingHandler : IRequestHandler<BillingHandlerModel, ServiceResponse<bool>>
     {
-        private readonly IClientIdentificationServiceFactory _clientIdentificationServiceFactory;
-        private readonly ISearchMethodServiceFactory _searchMethodServiceFactory;
+        
         private readonly IBillingServiceFactory _billingServiceFactory;
         private readonly ILogger<BillingHandler> _logger;
 
-        public BillingHandler(IClientIdentificationServiceFactory clientIdentificationServiceFactory,
-            ISearchMethodServiceFactory searchMethodServiceFactory,
-            IBillingServiceFactory billingServiceFactory,
+        public BillingHandler(IBillingServiceFactory billingServiceFactory,
             ILogger<BillingHandler> logger)
         {
-            _clientIdentificationServiceFactory = clientIdentificationServiceFactory;
-            _searchMethodServiceFactory = searchMethodServiceFactory;
             _billingServiceFactory = billingServiceFactory;
             _logger = logger;
         }

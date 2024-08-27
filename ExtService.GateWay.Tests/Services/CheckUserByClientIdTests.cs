@@ -18,14 +18,14 @@ namespace ExtService.GateWay.Tests.Services
     public class CheckUserByClientIdTests
     {
         private readonly Mock<IDBManager> _mockDbManager;
-        private readonly Mock<ILogger<CheckUserByClientId>> _mockLogger;
-        private readonly CheckUserByClientId _service;
+        private readonly Mock<ILogger<ClientIdentificationService>> _mockLogger;
+        private readonly ClientIdentificationService _service;
 
         public CheckUserByClientIdTests()
         {
             _mockDbManager = new Mock<IDBManager>();
-            _mockLogger = new Mock<ILogger<CheckUserByClientId>>();
-            _service = new CheckUserByClientId(_mockDbManager.Object, _mockLogger.Object);
+            _mockLogger = new Mock<ILogger<ClientIdentificationService>>();
+            _service = new ClientIdentificationService(_mockDbManager.Object, _mockLogger.Object);
         }
 
         [Fact]

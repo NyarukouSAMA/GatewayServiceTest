@@ -9,61 +9,51 @@ namespace ExtService.GateWay.API.Services.SProxing
 {
     public class ServiceProxing : IProxingService
     {
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly HttpClient _httpClient;
         private readonly ILogger<ServiceProxing> _logger;
 
         public ServiceProxing(IHttpClientFactory httpClientFactory,
             ILogger<ServiceProxing> logger)
         {
-            _httpClientFactory = httpClientFactory;
+            _httpClient = httpClientFactory.CreateClient();
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<string>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken)
+        public async Task<ServiceResponse<HttpContent>> ExecuteAsync(ProxyRequest request, CancellationToken cancellationToken)
         {
             try
             {
-                HttpClient _httpClient;
-                switch (request.RequestMethodName)
+                if (request.MethodHeaders != null)
                 {
-                    case MethodConstants.SuggestionMethodName:
-                        _httpClient = _httpClientFactory.CreateClient(HTTPConstants.SuggestionApiClientName);
-                        break;
-                    case MethodConstants.CleanerMethodName:
-                        _httpClient = _httpClientFactory.CreateClient(HTTPConstants.CleanerApiClientName);
-                        break;
-                    default:
-                        string errorMessage = $"Неправильное имя метода: {request.RequestMethodName}";
-                        _logger.LogError(errorMessage);
-                        
-                        return new ServiceResponse<string>
-                        {
-                            IsSuccess = false,
-                            StatusCode = StatusCodes.Status400BadRequest,
-                            ErrorMessage = errorMessage
-                        };
+                    foreach (var header in request.MethodHeaders)
+                    {
+                        _httpClient.DefaultRequestHeaders.Add(header.HeaderName, header.HeaderValue);
+                    }
                 }
 
-
+                if (request.ApiTimeout > 0)
+                {
+                    _httpClient.Timeout = TimeSpan.FromSeconds(request.ApiTimeout);
+                }
 
                 var httpRequest = new HttpRequestMessage
                 {
                     Method = request.Method,
-                    RequestUri = new Uri(_httpClient.BaseAddress, request.RequestPath)
+                    RequestUri = new Uri(request.RequestUri)
                 };
 
                 if (request.Body != null)
                 {
                     httpRequest.Content = new StringContent(request.Body, Encoding.UTF8, "application/json");
                 }
-                
+
                 var httpResponse = await _httpClient.SendAsync(httpRequest, cancellationToken);
                 if (!httpResponse.IsSuccessStatusCode)
                 {
                     string errorMessage = await httpResponse.GetErrorMessageAsync($@"Во время исполнения запроса по адрессу ""{httpRequest.RequestUri}"" возникла ошибка.");
 
                     _logger.LogError(errorMessage);
-                    return new ServiceResponse<string>()
+                    return new ServiceResponse<HttpContent>()
                     {
                         IsSuccess = false,
                         StatusCode = (int)httpResponse.StatusCode,
@@ -71,13 +61,11 @@ namespace ExtService.GateWay.API.Services.SProxing
                     };
                 }
 
-                var responseContent = await httpResponse.Content.ReadAsStringAsync();
-
-                return new ServiceResponse<string>()
+                return new ServiceResponse<HttpContent>()
                 {
                     StatusCode = (int)httpResponse.StatusCode,
                     IsSuccess = true,
-                    Data = responseContent
+                    Data = httpResponse.Content
                 };
             }
             catch (Exception ex)
@@ -85,7 +73,7 @@ namespace ExtService.GateWay.API.Services.SProxing
                 string headerMessage = "Во время исполнения проксирующего запроса возникла непредвиденная ошибка.";
 
                 _logger.LogError(ex, headerMessage);
-                return new ServiceResponse<string>()
+                return new ServiceResponse<HttpContent>()
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,

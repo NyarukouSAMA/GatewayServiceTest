@@ -9,9 +9,6 @@ builder.RegisterOptions();
 // Register loggers
 builder.RegisterLoggers();
 
-// Register common services
-builder.RegisterHttpServices();
-
 // Register JWT token authentication
 builder.RegisterJWTTokenAuth();
 
@@ -21,7 +18,13 @@ builder.RegisterDBService();
 // Register MediatR
 builder.RegisterMediatR();
 
-builder.Services.AddControllers();
+// Configure swagger
+builder.ConfigureSwaggerGen();
+
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+builder.Services.AddControllers().AddNewtonsoftJson();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -32,7 +35,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(opt =>
+    {
+        opt.SwaggerEndpoint("/swagger/v1/swagger.json", "ExtService.GateWay.API v1");
+    });
 }
 
 app.UseHttpsRedirection();

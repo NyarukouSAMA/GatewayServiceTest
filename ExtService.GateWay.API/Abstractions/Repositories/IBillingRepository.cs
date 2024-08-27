@@ -5,6 +5,7 @@ namespace ExtService.GateWay.API.Abstractions.Repositories
 {
     public interface IBillingRepository
     {
+        Task<int> InsertAsync(Billing billing);
         Task<Billing> RetrieveAsync(Expression<Func<Billing, bool>> criteria);
         Task<IEnumerable<Billing>> RetrieveMultipleAsync(Expression<Func<Billing, bool>> criteria);
     }

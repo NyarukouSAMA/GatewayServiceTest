@@ -1,9 +1,11 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
+using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
 using ExtService.GateWay.API.Models.HandlerResponses;
 using ExtService.GateWay.API.Models.ServiceRequests;
 using MediatR;
+using System.Text;
 
 namespace ExtService.GateWay.API.Handlers
 {
@@ -22,8 +24,7 @@ namespace ExtService.GateWay.API.Handlers
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<IdentificationHandlerResponse>> Handle(IdentificationHandlerModel request,
-            CancellationToken cancellationToken)
+        public async Task<ServiceResponse<IdentificationHandlerResponse>> Handle(IdentificationHandlerModel request, CancellationToken cancellationToken)
         {
             try
             {
@@ -46,7 +47,8 @@ namespace ExtService.GateWay.API.Handlers
                 var searchMethodService = _searchMethodServiceFactory.GetMethodInfoService();
                 var searchMethodResult = await searchMethodService.GetMethodInfoAsync(new SearchMethodRequest
                 {
-                    MethodName = request.MethodName
+                    MethodName = request.MethodName,
+                    SubMethodName = request.SubMethodName
                 }, cancellationToken);
 
                 if (!searchMethodResult.IsSuccess)
@@ -59,24 +61,42 @@ namespace ExtService.GateWay.API.Handlers
                     };
                 }
 
+                StringBuilder requestUriStringBuilder = new StringBuilder();
+
+                requestUriStringBuilder.Append(searchMethodResult.Data.ApiBaseUri);
+                if (!string.IsNullOrEmpty(searchMethodResult.Data.ApiPrefix))
+                {
+                    requestUriStringBuilder.Append($"/{searchMethodResult.Data.ApiPrefix}");
+                }
+                requestUriStringBuilder.Append($"/{searchMethodResult.Data.MethodPath}");
+                if (!string.IsNullOrEmpty(searchMethodResult.Data.SubMethodPath))
+                {
+                    requestUriStringBuilder.Append($"/{searchMethodResult.Data.SubMethodPath}");
+                }
+
                 return new ServiceResponse<IdentificationHandlerResponse>
                 {
                     IsSuccess = true,
+                    StatusCode = StatusCodes.Status200OK,
                     Data = new IdentificationHandlerResponse
                     {
                         IdentificationId = clientIdentificationResult.Data.IdentificationId,
-                        MethodId = searchMethodResult.Data.MethodId
+                        MethodId = searchMethodResult.Data.MethodId,
+                        SystemName = clientIdentificationResult.Data.SystemInfo.SystemName,
+                        RequestUri = requestUriStringBuilder.ToString(),
                     }
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while processing the request");
+                string headerMessage = "Во время идентификации клиента возникла непредвиденная ошибка.";
+
+                _logger.LogError(ex, headerMessage);
                 return new ServiceResponse<IdentificationHandlerResponse>
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,
-                    ErrorMessage = "An error occurred while processing the request"
+                    ErrorMessage = ex.BuildExceptionMessage(headerMessage)
                 };
             }
         }

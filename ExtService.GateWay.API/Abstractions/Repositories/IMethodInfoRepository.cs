@@ -5,6 +5,7 @@ namespace ExtService.GateWay.API.Abstractions.Repositories
 {
     public interface IMethodInfoRepository
     {
-        Task<MethodInfo> RetrieveAsync(Expression<Func<MethodInfo, bool>> criteria);
+        Task<MethodInfo> RetrieveAsync(Expression<Func<MethodInfo, bool>> criteria,
+            Expression<Func<MethodInfo, object>>[] includes = null);
     }
 }

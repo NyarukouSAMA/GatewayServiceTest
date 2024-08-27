@@ -38,7 +38,7 @@ namespace ExtService.GateWay.API.Services.Factories
             {
                 try
                 {
-                    return scopedProvider.GetRequiredService<CheckUserByClientId>();
+                    return scopedProvider.GetRequiredService<ClientIdentificationService>();
                 }
                 catch (Exception ex)
                 {

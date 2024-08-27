@@ -5,6 +5,7 @@ namespace ExtService.GateWay.API.Abstractions.Repositories
 {
     public interface IIdentificationRepository
     {
-        Task<Identification> RetrieveAsync(Expression<Func<Identification, bool>> criteria);
+        Task<Identification> RetrieveAsync(Expression<Func<Identification, bool>> criteria,
+            Expression<Func<Identification, object>>[] includes = null);
     }
 }
