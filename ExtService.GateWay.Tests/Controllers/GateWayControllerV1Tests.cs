@@ -1,7 +1,9 @@
-﻿using ExtService.GateWay.API.Controllers;
+﻿using ExtService.GateWay.API.Controllers.V1;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.Requests;
+using ExtService.GateWay.API.Models.Requests.V1;
+using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -13,23 +15,23 @@ using Xunit;
 
 namespace ExtService.GateWay.Tests.Controllers
 {
-    public class GateWayControllerV1Test
+    public class GateWayControllerV1Tests
     {
-        private readonly GateWayControllerV1 _controller;
+        private readonly GateWayController _controller;
         private readonly Mock<IMediator> _mediatorMock;
-        private readonly Mock<ILogger<GateWayControllerV1>> _loggerMock;
+        private readonly Mock<ILogger<GateWayController>> _loggerMock;
         private readonly Mock<ILoggerFactory> _loggerFactoryMock;
         private readonly Mock<ILogger> _mockRequestLogger;
 
-        public GateWayControllerV1Test()
+        public GateWayControllerV1Tests()
         {
             _mediatorMock = new Mock<IMediator>();
-            _loggerMock = new Mock<ILogger<GateWayControllerV1>>();
+            _loggerMock = new Mock<ILogger<GateWayController>>();
             _loggerFactoryMock = new Mock<ILoggerFactory>();
             _mockRequestLogger = new Mock<ILogger>();
             _loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>())).Returns(_mockRequestLogger.Object);
 
-            _controller = new GateWayControllerV1(_mediatorMock.Object, _loggerMock.Object, _loggerFactoryMock.Object);
+            _controller = new GateWayController(_mediatorMock.Object, _loggerFactoryMock.Object);
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
@@ -45,7 +47,12 @@ namespace ExtService.GateWay.Tests.Controllers
             _controller.ControllerContext.HttpContext = context;
 
             // Act
-            var result = await _controller.Proxy();
+            var result = await _controller.Proxy(new PostProxyRequest()
+            {
+                MethodName = "testMethodName",
+                SubMethodName = "testSubMethodName",
+                RequestBody = "testRequestBody"
+            });
 
             // Assert
             var unauthorizedResult = Assert.IsType<UnauthorizedResult>(result);
@@ -66,7 +73,11 @@ namespace ExtService.GateWay.Tests.Controllers
                 .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = false, StatusCode = 400, ErrorMessage = "Billing error" });
 
             // Act
-            var result = await _controller.Proxy();
+            var result = await _controller.Proxy(new PostProxyRequest() { 
+                MethodName = "testMethodName",
+                SubMethodName = "testSubMethodName",
+                RequestBody = "testRequestBody"
+            });
 
             // Assert
             var statusCodeResult = Assert.IsType<ObjectResult>(result);
@@ -89,10 +100,15 @@ namespace ExtService.GateWay.Tests.Controllers
                 .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = true });
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<ProxyRequest>(), default))
-                .ReturnsAsync(new ServiceResponse<string> { IsSuccess = true, Data = "response data" });
+                .ReturnsAsync(new ServiceResponse<HttpContent> { IsSuccess = true, Data = new StringContent("response data") });
 
             // Act
-            var result = await _controller.Proxy();
+            var result = await _controller.Proxy(new PostProxyRequest()
+            {
+                MethodName = "testMethodName",
+                SubMethodName = "testSubMethodName",
+                RequestBody = "testRequestBody"
+            });
 
             // Assert
             var okResult = Assert.IsType<OkObjectResult>(result);

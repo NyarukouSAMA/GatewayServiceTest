@@ -1,7 +1,7 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
 using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
 
 namespace ExtService.GateWay.API.Handlers

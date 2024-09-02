@@ -1,27 +1,25 @@
 ﻿using ExtService.GateWay.API.Constants;
-using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
-using ExtService.GateWay.API.Models.HandlerResponses;
 using ExtService.GateWay.API.Models.Logging;
-using ExtService.GateWay.API.Models.Requests;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
+using ExtService.GateWay.API.Models.Requests.V2;
 
-namespace ExtService.GateWay.API.Controllers
+namespace ExtService.GateWay.API.Controllers.V2
 {
     [ApiController]
     [Route("api/v1/[controller]")]
-    public class GateWayControllerV1 : ControllerBase
+    public class GateWayController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly ILogger _requestLogger;
 
-        public GateWayControllerV1(IMediator mediator,
+        public GateWayController(IMediator mediator,
             ILoggerFactory loggerFactory)
         {
             _mediator = mediator;
@@ -32,6 +30,7 @@ namespace ExtService.GateWay.API.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Proxy([FromBody] PostProxyRequest requestContent)
         {
+            #region Check client id
             var clientId = User.Claims.FirstOrDefault(c => c.Type == "azp")?.Value;
             if (string.IsNullOrEmpty(clientId))
             {
@@ -42,7 +41,9 @@ namespace ExtService.GateWay.API.Controllers
                 }));
                 return Unauthorized(errorMessage);
             }
+            #endregion
 
+            #region Check request body
             if (requestContent == null
                 || requestContent.RequestBody is JObject && ((JObject)requestContent.RequestBody).Count == 0
                 || requestContent.RequestBody is JArray && ((JArray)requestContent.RequestBody).Count == 0
@@ -55,9 +56,11 @@ namespace ExtService.GateWay.API.Controllers
                 }));
                 return BadRequest(errorMessage);
             }
+            #endregion
 
             string requestBody = requestContent.RequestBody.ToString();
 
+            #region Get method info and identification record
             var identificationResponce = await _mediator.Send(new IdentificationHandlerModel
             {
                 ClientId = clientId,
@@ -77,18 +80,15 @@ namespace ExtService.GateWay.API.Controllers
 
                 return StatusCode(identificationResponce.StatusCode, identificationResponce.ErrorMessage);
             }
+            #endregion
 
-            
-            bool ignoreCache = Request.Headers.TryGetValue("IgnoreCache", out var ignoreCacheValue)
-                && bool.TryParse(ignoreCacheValue, out var ignoreCacheParseResult)
-                && ignoreCacheParseResult;
-
-            if (!ignoreCache)
+            #region Get value from Cache (if flag's value false)
+            if (!requestContent.IgnoreCache)
             {
                 var getProxyCacheResult = await _mediator.Send(new GetProxyCacheHandlerModel
                 {
-                    KeyInput = requestContent,
-                    KeyPrefix = MethodConstants.SuggestionMethodName
+                    RequestBodyAsKeyInput = requestBody,
+                    KeyPrefix = requestContent.MethodName,
                 });
 
                 if (!getProxyCacheResult.IsSuccess && getProxyCacheResult.StatusCode != StatusCodes.Status404NotFound)
@@ -98,7 +98,7 @@ namespace ExtService.GateWay.API.Controllers
                         ErrorMessage = getProxyCacheResult.ErrorMessage,
                         IsSuccess = getProxyCacheResult.IsSuccess,
                         StatusCode = getProxyCacheResult.StatusCode,
-                        RequestData = requestContent
+                        RequestData = requestBody
                     }));
 
                     return StatusCode(getProxyCacheResult.StatusCode, getProxyCacheResult.ErrorMessage);
@@ -112,14 +112,20 @@ namespace ExtService.GateWay.API.Controllers
                         IsSuccess = getProxyCacheResult.IsSuccess,
                         StatusCode = getProxyCacheResult.StatusCode,
                         CacheHit = true,
-                        RequestData = requestContent,
-                        ResponseData = getProxyCacheResult.Data.ProxyResponse
+                        RequestData = requestBody,
+                        ResponseData = getProxyCacheResult.Data.ResponseBody
                     }));
 
-                    return Ok(getProxyCacheResult.Data.ProxyResponse);
+                    return new ContentResult
+                    {
+                        Content = getProxyCacheResult.Data.ResponseBody,
+                        ContentType = getProxyCacheResult.Data.ContentType,
+                        StatusCode = getProxyCacheResult.Data.StatusCode
+                    };
                 }
             }
-            
+            #endregion
+
             var billingResponce = await _mediator.Send(new BillingHandlerModel
             {
                 ClientId = clientId,
@@ -137,6 +143,29 @@ namespace ExtService.GateWay.API.Controllers
                     StatusCode = billingResponce.StatusCode,
                     RequestData = requestBody
                 }));
+
+                //Check notification table (call check notification service) and send notification to rabbitmq (send notification service)
+                if (billingResponce.StatusCode == StatusCodes.Status429TooManyRequests)
+                {
+                    var checkNotificationResponce = await _mediator.Send(new LimitNotificationHandlerModel
+                    {
+                        BillingId = billingResponce.Data.BillingId,
+                        RequestLimit = billingResponce.Data.RequestLimit,
+                        RequestCount = billingResponce.Data.RequestCount,
+                        BillingConfigId = billingResponce.Data.BillingConfigId
+                    });
+
+                    if (!checkNotificationResponce.IsSuccess)
+                    {
+                        _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                        {
+                            ErrorMessage = checkNotificationResponce.ErrorMessage,
+                            IsSuccess = checkNotificationResponce.IsSuccess,
+                            StatusCode = checkNotificationResponce.StatusCode,
+                            RequestData = requestBody
+                        }));
+                    }
+                }
 
                 return StatusCode(billingResponce.StatusCode, billingResponce.ErrorMessage);
             }

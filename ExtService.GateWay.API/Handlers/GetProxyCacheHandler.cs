@@ -1,7 +1,7 @@
 ﻿using ExtService.GateWay.API.Abstractions.Services;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
-using ExtService.GateWay.API.Models.HandlerResponses;
+using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
 
 namespace ExtService.GateWay.API.Handlers
@@ -20,7 +20,7 @@ namespace ExtService.GateWay.API.Handlers
         {
             try
             {
-                var cacheResult = await _cacheService.GetCachedDataAsync<ProxyCache>(request.KeyInput, key => $"{request.KeyPrefix}:{key}");
+                var cacheResult = await _cacheService.GetCachedDataAsync<ProxyCache>(request.RequestBodyAsKeyInput, key => $"{request.KeyPrefix}:{key}");
                 if (!cacheResult.IsSuccess)
                 {
                     return new ServiceResponse<ProxyCache>

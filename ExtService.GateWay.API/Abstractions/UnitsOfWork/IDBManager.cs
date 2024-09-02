@@ -8,6 +8,7 @@ namespace ExtService.GateWay.API.Abstractions.UnitsOfWork
         IBillingConfigRepository BillingConfigRepository { get; }
         IBillingRepository BillingRepository { get; }
         IMethodInfoRepository MethodInfoRepository { get; }
+        INotificationInfoRepository NotificationInfoRepository { get; }
         Task<int> CommitAsync();
     }
 }

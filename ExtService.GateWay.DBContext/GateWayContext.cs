@@ -94,9 +94,6 @@ namespace ExtService.GateWay.DBContext
                 entity.HasMany(s => s.IdentificationSet)
                     .WithOne(i => i.SystemInfo)
                     .HasForeignKey(i => i.SystemId);
-                entity.HasMany(s => s.NotificationInfoSet)
-                    .WithOne(n => n.SystemInfo)
-                    .HasForeignKey(n => n.SystemId);
             });
 
             modelBuilder.Entity<UserInfo>(entity =>
@@ -164,6 +161,9 @@ namespace ExtService.GateWay.DBContext
                 entity.HasOne(b => b.BillingConfig)
                     .WithMany(b => b.BillingRecords)
                     .HasForeignKey(b => b.BillingConfigId);
+                entity.HasMany(b => b.NotificationInfoSet)
+                    .WithOne(n => n.Billing)
+                    .HasForeignKey(n => n.BillingId);
                 entity.HasAlternateKey(b => new { b.BillingConfigId, b.StartDate, b.EndDate });
             });
 
@@ -173,12 +173,12 @@ namespace ExtService.GateWay.DBContext
                     .HasDefaultValueSql("uuid_generate_v4()")
                     .IsRequired();
                 entity.HasCheckConstraint("CK_NotificationLimitPercentage_Range", "\"NotificationLimitPercentage\" > 0 AND \"NotificationLimitPercentage\" < 100");
-                entity.HasOne(n => n.SystemInfo)
-                    .WithMany(s => s.NotificationInfoSet)
-                    .HasForeignKey(n => n.SystemId);
                 entity.HasOne(n => n.BillingConfig)
                     .WithMany(b => b.NotificationInfoSet)
                     .HasForeignKey(n => n.BillingConfigId);
+                entity.HasOne(n => n.Billing)
+                    .WithMany(b => b.NotificationInfoSet)
+                    .HasForeignKey(n => n.BillingId);
             });
         }
 

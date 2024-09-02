@@ -1,7 +1,6 @@
 ﻿using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.DTO;
-using ExtService.GateWay.API.Models.ServiceRequests;
-using ExtService.GateWay.DBContext.DBModels;
+using ExtService.GateWay.API.Models.ServiceModels;
 
 namespace ExtService.GateWay.API.Abstractions.Services
 {

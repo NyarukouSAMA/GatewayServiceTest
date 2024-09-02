@@ -1,5 +1,4 @@
 ﻿using ExtService.GateWay.API.Models.Common;
-using ExtService.GateWay.API.Models.HandlerResponses;
 using MediatR;
 
 namespace ExtService.GateWay.API.Models.HandlerModels

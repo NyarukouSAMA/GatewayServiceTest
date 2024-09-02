@@ -8,5 +8,6 @@
         public bool ProxyMockup { get; set; }
         public bool MethodInfoMockup { get; set; }
         public bool MockupJWTRegistration { get; set; }
+        public bool LimitCheckMockup { get; set; }
     }
 }

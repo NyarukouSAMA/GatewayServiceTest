@@ -1,27 +1,22 @@
 ﻿using ExtService.GateWay.API.Abstractions.UnitsOfWork;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using ExtService.GateWay.API.Services.SClientIdentification;
 using ExtService.GateWay.DBContext.DBModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace ExtService.GateWay.Tests.Services
 {
-    public class CheckUserByClientIdTests
+    public class ClientIdentificationServiceService
     {
         private readonly Mock<IDBManager> _mockDbManager;
         private readonly Mock<ILogger<ClientIdentificationService>> _mockLogger;
         private readonly ClientIdentificationService _service;
 
-        public CheckUserByClientIdTests()
+        public ClientIdentificationServiceService()
         {
             _mockDbManager = new Mock<IDBManager>();
             _mockLogger = new Mock<ILogger<ClientIdentificationService>>();
@@ -32,7 +27,8 @@ namespace ExtService.GateWay.Tests.Services
         public async Task IdentifyClientAsync_ShouldReturnNotFound_WhenClientNotFound()
         {
             // Arrange
-            _mockDbManager.Setup(m => m.IdentificationRepository.RetrieveAsync(It.IsAny<Expression<Func<Identification, bool>>>()))
+            _mockDbManager.Setup(m => m.IdentificationRepository.RetrieveAsync(It.IsAny<Expression<Func<Identification, bool>>>(),
+                It.IsAny<Expression<Func<Identification, object>>[]>()))
                 .ReturnsAsync((Identification)null);
 
             var request = new ClientIdentificationRequest { ClientId = "client1" };
@@ -51,7 +47,8 @@ namespace ExtService.GateWay.Tests.Services
         {
             // Arrange
             var identification = new Identification { ClientId = "client1" };
-            _mockDbManager.Setup(m => m.IdentificationRepository.RetrieveAsync(It.IsAny<Expression<Func<Identification, bool>>>()))
+            _mockDbManager.Setup(m => m.IdentificationRepository.RetrieveAsync(It.IsAny<Expression<Func<Identification, bool>>>(),
+                It.IsAny<Expression<Func<Identification, object>>[]>()))
                 .ReturnsAsync(identification);
 
             var request = new ClientIdentificationRequest { ClientId = "client1" };

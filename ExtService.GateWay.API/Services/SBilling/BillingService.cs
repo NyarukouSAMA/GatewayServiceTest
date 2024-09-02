@@ -3,7 +3,7 @@ using ExtService.GateWay.API.Abstractions.Services;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
 using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using ExtService.GateWay.DBContext.DBModels;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -25,7 +25,7 @@ namespace ExtService.GateWay.API.Services.SBilling
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<bool>> UpdateBillingRecordAsync(BillingRequest request, CancellationToken cancellationToken)
+        public async Task<ServiceResponse<BillingResponse>> UpdateBillingRecordAsync(BillingRequest request, CancellationToken cancellationToken)
         {
             try
             {
@@ -33,7 +33,7 @@ namespace ExtService.GateWay.API.Services.SBilling
                 {
                     string errorMessage = "Запрос не может быть пустым.";
                     _logger.LogError(errorMessage);
-                    return new ServiceResponse<bool>
+                    return new ServiceResponse<BillingResponse>
                     {
                         IsSuccess = false,
                         StatusCode = StatusCodes.Status400BadRequest,
@@ -59,7 +59,7 @@ namespace ExtService.GateWay.API.Services.SBilling
                     {
                         string errorMessage = $"Биллинговая запись с параметрами clientId: \"{request.ClientId}\" and methodId: \"{request.MethodId}\" не сконфигурирована.";
                         _logger.LogError(errorMessage);
-                        return new ServiceResponse<bool>
+                        return new ServiceResponse<BillingResponse>
                         {
                             IsSuccess = false,
                             StatusCode = StatusCodes.Status404NotFound,
@@ -71,7 +71,7 @@ namespace ExtService.GateWay.API.Services.SBilling
                     {
                         string errorMessage = $"Лимит запросов для clientId: \"{request.ClientId}\" по методу methodId: \"{request.MethodId}\" не сконфигурирован.";
                         _logger.LogError(errorMessage);
-                        return new ServiceResponse<bool>
+                        return new ServiceResponse<BillingResponse>
                         {
                             IsSuccess = false,
                             StatusCode = StatusCodes.Status404NotFound,
@@ -86,7 +86,7 @@ namespace ExtService.GateWay.API.Services.SBilling
                     DateTime endTime = curDateEnd > billingConfig.EndDate ? billingConfig.EndDate : curDateEnd;
                     try
                     {
-                        var insertResult = await _dbManager?.BillingRepository.InsertAsync(new Billing
+                        Billing recordToInsert = new Billing
                         {
                             BillingId = Guid.NewGuid(),
                             BillingConfigId = billingConfig.BillingConfigId,
@@ -96,15 +96,23 @@ namespace ExtService.GateWay.API.Services.SBilling
                             EndDate = endTime,
                             RequestLimit = billingConfig.RequestLimitPerPeriod,
                             RequestCount = 1
-                        });
+                        };
+
+                        var insertResult = await _dbManager?.BillingRepository.InsertAsync(recordToInsert);
 
                         if (insertResult == 1)
                         {
-                            return new ServiceResponse<bool>
+                            return new ServiceResponse<BillingResponse>
                             {
                                 IsSuccess = true,
                                 StatusCode = StatusCodes.Status200OK,
-                                Data = true
+                                Data = new BillingResponse
+                                {
+                                    BillingConfigId = recordToInsert.BillingConfigId,
+                                    BillingId = recordToInsert.BillingId,
+                                    RequestCount = recordToInsert.RequestCount,
+                                    RequestLimit = recordToInsert.RequestLimit
+                                }
                             };
                         }
                     }
@@ -142,32 +150,63 @@ namespace ExtService.GateWay.API.Services.SBilling
                     
                 }
 
-                var result = await _connection.ExecuteAsync($@"
+                var result = await _connection.QueryAsync<BillingResponse>($@"
 UPDATE public.""Billing"" b
-SET ""RequestCount"" = ""RequestCount"" + 1
-WHERE b.""IdentificationId"" = @IdentificationId
-  AND b.""MethodId"" = @MethodId
-  AND @CurrentDate BETWEEN b.""StartDate"" AND b.""EndDate""
-  AND b.""RequestCount"" < b.""RequestLimit"";
+SET ""RequestCount"" = CASE WHEN ba.""rowCount"" = 1 THEN ""RequestCount"" + 1 ELSE ""RequestCount"" END
+FROM (
+    SELECT ""BillingId"", count(*) OVER() as ""rowCount"" from public.""Billing""
+    WHERE ""IdentificationId"" = @IdentificationId
+      AND ""MethodId"" = @MethodId
+      AND @CurrentDate BETWEEN ""StartDate"" AND ""EndDate""
+      AND ""RequestCount"" < ""RequestLimit""
+) ba
+WHERE b.""BillingId"" = ba.""BillingId""
+RETURNING b.""BillingId"", b.""RequestLimit"", b.""RequestCount"", b.""BillingConfigId"";
 ",
                 new { request.IdentificationId, request.MethodId, request.CurrentDate });
 
-                if (!(result == 1))
+                if (result.Count() > 1)
                 {
-                    string errorMessage = $"Лимит запросов для clientId: \"{request.ClientId}\" по методу methodId: \"{request.MethodId}\" исчерпан.";
+                    string errorMessage = $"Найдено более одной записи биллинга для clientId: \"{request.ClientId}\" по методу methodId: \"{request.MethodId}\".";
                     _logger.LogError(errorMessage);
-                    return new ServiceResponse<bool>
+                    return new ServiceResponse<BillingResponse>
                     {
                         IsSuccess = false,
-                        StatusCode = StatusCodes.Status429TooManyRequests,
+                        StatusCode = StatusCodes.Status500InternalServerError,
                         ErrorMessage = errorMessage
                     };
                 }
-                else return new ServiceResponse<bool>
+
+                if (result.Count() == 0)
+                {
+                    string errorMessage = $"Лимит запросов для clientId: \"{request.ClientId}\" по методу methodId: \"{request.MethodId}\" исчерпан.";
+                    _logger.LogError(errorMessage);
+                    return new ServiceResponse<BillingResponse>
+                    {
+                        IsSuccess = false,
+                        StatusCode = StatusCodes.Status429TooManyRequests,
+                        ErrorMessage = errorMessage,
+                        Data = new BillingResponse
+                        {
+                            BillingId = billingRecord.BillingId,
+                            BillingConfigId = billingRecord.BillingConfigId,
+                            RequestCount = billingRecord.RequestCount,
+                            RequestLimit = billingRecord.RequestLimit
+                        }
+                    };
+                }
+                
+                return new ServiceResponse<BillingResponse>
                 {
                     IsSuccess = true,
                     StatusCode = StatusCodes.Status200OK,
-                    Data = true
+                    Data = new BillingResponse
+                    {
+                        BillingId = result.First().BillingId,
+                        BillingConfigId = result.First().BillingConfigId,
+                        RequestCount = result.First().RequestCount,
+                        RequestLimit = result.First().RequestLimit
+                    }
                 };
             }
             catch (Exception ex)
@@ -175,7 +214,7 @@ WHERE b.""IdentificationId"" = @IdentificationId
                 string headerMessage = "Во время обработки биллинговой записи возникла непредвиденная ошибка.";
 
                 _logger.LogError(ex, headerMessage);
-                return new ServiceResponse<bool>
+                return new ServiceResponse<BillingResponse>
                 {
                     IsSuccess = false,
                     StatusCode = StatusCodes.Status500InternalServerError,

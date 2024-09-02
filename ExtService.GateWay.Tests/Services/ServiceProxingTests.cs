@@ -1,17 +1,13 @@
 ﻿using ExtService.GateWay.API.Constants;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using ExtService.GateWay.API.Services.SProxing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Moq.Protected;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
+using ExtService.GateWay.DBContext.DBModels;
 
 namespace ExtService.GateWay.Tests.Services
 {
@@ -41,7 +37,17 @@ namespace ExtService.GateWay.Tests.Services
         public async Task ExecuteAsync_ShouldReturnSuccess_WhenHttpRequestSucceeds()
         {
             // Arrange
-            var request = new ProxyRequest { RequestMethodName = MethodConstants.SuggestionMethodName, Method = HttpMethod.Get, RequestPath = "/test" };
+            var request = new ProxyRequest
+            {
+                ApiTimeout = 10,
+                Method = HttpMethod.Post,
+                Body = "test body",
+                RequestUri = "http://localhost/test",
+                MethodHeaders = new List<MethodHeaders>() 
+                { 
+                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                }
+            };
 
             _mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -55,18 +61,30 @@ namespace ExtService.GateWay.Tests.Services
                 });
 
             // Act
-            var result = await _service.ExecuteAsync(request, CancellationToken.None);
+            var serviceResponce = await _service.ExecuteAsync(request, CancellationToken.None);
 
             // Assert
-            Assert.True(result.IsSuccess);
-            Assert.Equal("response data", result.Data);
+            Assert.True(serviceResponce.IsSuccess);
+
+            var result = await serviceResponce.Data.ReadAsStringAsync();
+            Assert.Equal("response data", result);
         }
 
         [Fact]
         public async Task ExecuteAsync_ShouldReturnError_WhenHttpRequestFails()
         {
             // Arrange
-            var request = new ProxyRequest { RequestMethodName = MethodConstants.SuggestionMethodName, Method = HttpMethod.Get, RequestPath = "/test" };
+            var request = new ProxyRequest
+            {
+                ApiTimeout = 10,
+                Method = HttpMethod.Post,
+                Body = "test body",
+                RequestUri = "http://localhost/test",
+                MethodHeaders = new List<MethodHeaders>()
+                {
+                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                }
+            };
 
             _mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -92,7 +110,17 @@ namespace ExtService.GateWay.Tests.Services
         public async Task ExecuteAsync_ShouldReturnBadRequest_WhenMethodNameIsInvalid()
         {
             // Arrange
-            var request = new ProxyRequest { RequestMethodName = "invalidMethod", Method = HttpMethod.Get, RequestPath = "/test" };
+            var request = new ProxyRequest
+            {
+                ApiTimeout = 10,
+                Method = HttpMethod.Post,
+                Body = "test body",
+                RequestUri = "http://localhost/test",
+                MethodHeaders = new List<MethodHeaders>()
+                {
+                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                }
+            };
 
             // Act
             var result = await _service.ExecuteAsync(request, CancellationToken.None);
@@ -107,7 +135,17 @@ namespace ExtService.GateWay.Tests.Services
         public async Task ExecuteAsync_ShouldReturnServerError_WhenExceptionThrown()
         {
             // Arrange
-            var request = new ProxyRequest { RequestMethodName = MethodConstants.SuggestionMethodName, Method = HttpMethod.Get, RequestPath = "/test" };
+            var request = new ProxyRequest
+            {
+                ApiTimeout = 10,
+                Method = HttpMethod.Post,
+                Body = "test body",
+                RequestUri = "http://localhost/test",
+                MethodHeaders = new List<MethodHeaders>()
+                {
+                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                }
+            };
 
             _mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(

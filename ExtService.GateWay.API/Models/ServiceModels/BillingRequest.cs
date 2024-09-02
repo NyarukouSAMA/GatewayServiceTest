@@ -1,7 +1,7 @@
 ﻿using ExtService.GateWay.API.Models.Common;
 using MediatR;
 
-namespace ExtService.GateWay.API.Models.ServiceRequests
+namespace ExtService.GateWay.API.Models.ServiceModels
 {
     public class BillingRequest : IRequest<ServiceResponse<bool>>
     {

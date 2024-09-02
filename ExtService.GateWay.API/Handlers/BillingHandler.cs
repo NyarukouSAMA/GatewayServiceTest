@@ -1,12 +1,12 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
 
 namespace ExtService.GateWay.API.Handlers
 {
-    public class BillingHandler : IRequestHandler<BillingHandlerModel, ServiceResponse<bool>>
+    public class BillingHandler : IRequestHandler<BillingHandlerModel, ServiceResponse<BillingResponse>>
     {
         
         private readonly IBillingServiceFactory _billingServiceFactory;
@@ -19,42 +19,25 @@ namespace ExtService.GateWay.API.Handlers
             _logger = logger;
         }
 
-        public async Task<ServiceResponse<bool>> Handle(BillingHandlerModel request, CancellationToken cancellationToken)
+        public async Task<ServiceResponse<BillingResponse>> Handle(BillingHandlerModel request, CancellationToken cancellationToken)
         {
             try
             {
                 var billingService = _billingServiceFactory.GetBillingService();
-                var billingResult = await billingService.UpdateBillingRecordAsync(new BillingRequest
+                return await billingService.UpdateBillingRecordAsync(new BillingRequest
                 {
                     IdentificationId = request.IdentificationId,
                     ClientId = request.ClientId,
                     MethodId = request.MethodId,
                     CurrentDate = request.CurrentDate
                 }, cancellationToken);
-
-                if (!billingResult.IsSuccess)
-                {
-                    return new ServiceResponse<bool>
-                    {
-                        IsSuccess = false,
-                        StatusCode = billingResult.StatusCode,
-                        ErrorMessage = billingResult.ErrorMessage
-                    };
-                }
-
-                return new ServiceResponse<bool>
-                {
-                    IsSuccess = true,
-                    StatusCode = 200,
-                    Data = true
-                };
             }
             catch (Exception ex)
             {
                 string headerMessage = "Во время идентификации и обработки биллинга возникла непредвиденная ошибка.";
 
                 _logger.LogError(ex, ex.Message);
-                return new ServiceResponse<bool>
+                return new ServiceResponse<BillingResponse>
                 {
                     IsSuccess = false,
                     StatusCode = 500,

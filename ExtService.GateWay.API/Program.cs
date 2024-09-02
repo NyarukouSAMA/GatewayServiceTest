@@ -1,5 +1,4 @@
 using ExtService.GateWay.API.Helpers;
-using ExtService.GateWay.API.Utilities.DBUtils;
 
 var builder = WebApplication.CreateBuilder(args);
 

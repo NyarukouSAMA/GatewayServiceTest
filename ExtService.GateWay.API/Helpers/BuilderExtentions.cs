@@ -21,7 +21,6 @@ using Npgsql;
 using Serilog;
 using Serilog.Settings.Configuration;
 using System.Data;
-using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using ExtService.GateWay.API.Abstractions.Services;
 using Microsoft.OpenApi.Models;
@@ -124,8 +123,9 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddScoped<IBillingConfigRepository, BillingConfigRepository>();
             builder.Services.AddScoped<IBillingRepository, BillingRepository>();
             builder.Services.AddScoped<IMethodInfoRepository, MethodInfoRepository>();
+            builder.Services.AddScoped<INotificationInfoRepository, NotificationInfoRepository>();
 
-            builder.Services.AddScoped<IDBManager, DBManager>();
+            builder.Services.AddSingleton<IDBManager, DBManager>();
 
             return builder;
         }

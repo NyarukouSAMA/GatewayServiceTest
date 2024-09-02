@@ -1,8 +1,7 @@
 ﻿using ExtService.GateWay.API.Abstractions.Services;
-using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using System.Text;
 
 namespace ExtService.GateWay.API.Services.SProxing

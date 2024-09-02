@@ -26,5 +26,7 @@ namespace ExtService.GateWay.DBContext.DBModels
         [Required]
         public Guid BillingConfigId { get; set; }
         public BillingConfig BillingConfig { get; set; }
+        //1-to-M relationships
+        public ICollection<NotificationInfo> NotificationInfoSet { get; set; }
     }
 }

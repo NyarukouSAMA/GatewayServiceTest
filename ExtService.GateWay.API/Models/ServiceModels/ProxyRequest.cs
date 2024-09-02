@@ -2,7 +2,7 @@
 using ExtService.GateWay.DBContext.DBModels;
 using MediatR;
 
-namespace ExtService.GateWay.API.Models.ServiceRequests
+namespace ExtService.GateWay.API.Models.ServiceModels
 {
     public class ProxyRequest : IRequest<ServiceResponse<HttpContent>>
     {

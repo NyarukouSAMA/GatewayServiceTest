@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ExtService.GateWay.API.Models.Requests
+namespace ExtService.GateWay.API.Models.Requests.V2
 {
     public class PostProxyRequest
     {
@@ -10,5 +10,7 @@ namespace ExtService.GateWay.API.Models.Requests
         public string SubMethodName { get; set; } = string.Empty;
         [Required]
         public object RequestBody { get; set; }
+        [Required]
+        public bool IgnoreCache { get; set; }
     }
 }

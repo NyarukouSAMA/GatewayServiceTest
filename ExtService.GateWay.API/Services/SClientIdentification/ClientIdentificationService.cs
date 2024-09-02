@@ -2,7 +2,7 @@
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
 using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
-using ExtService.GateWay.API.Models.ServiceRequests;
+using ExtService.GateWay.API.Models.ServiceModels;
 using ExtService.GateWay.DBContext.DBModels;
 
 namespace ExtService.GateWay.API.Services.SClientIdentification

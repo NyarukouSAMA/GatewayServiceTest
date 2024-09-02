@@ -13,6 +13,5 @@ namespace ExtService.GateWay.DBContext.DBModels
         //1-to-M links
         public ICollection<UserInfo> Users { get; set; }
         public ICollection<Identification> IdentificationSet { get; set; }
-        public ICollection<NotificationInfo> NotificationInfoSet { get; set; }
     }
 }
