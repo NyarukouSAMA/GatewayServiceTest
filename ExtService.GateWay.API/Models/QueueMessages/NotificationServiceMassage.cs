@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace ExtService.GateWay.API.Models.QueueMessages
+﻿namespace ExtService.GateWay.API.Models.QueueMessages
 {
     public class NotificationServiceMassage
     {

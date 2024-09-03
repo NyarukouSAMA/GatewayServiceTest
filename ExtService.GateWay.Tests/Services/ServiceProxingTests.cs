@@ -1,5 +1,4 @@
-﻿using ExtService.GateWay.API.Constants;
-using ExtService.GateWay.API.Models.ServiceModels;
+﻿using ExtService.GateWay.API.Models.ServiceModels;
 using ExtService.GateWay.API.Services.SProxing;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;

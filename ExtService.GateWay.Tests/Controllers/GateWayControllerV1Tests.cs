@@ -1,7 +1,6 @@
 ﻿using ExtService.GateWay.API.Controllers.V1;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
-using ExtService.GateWay.API.Models.Requests;
 using ExtService.GateWay.API.Models.Requests.V1;
 using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
@@ -70,7 +69,7 @@ namespace ExtService.GateWay.Tests.Controllers
             _controller.ControllerContext.HttpContext = context;
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<BillingHandlerModel>(), default))
-                .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = false, StatusCode = 400, ErrorMessage = "Billing error" });
+                .ReturnsAsync(new ServiceResponse<BillingResponse> { IsSuccess = false, StatusCode = 400, ErrorMessage = "Billing error" });
 
             // Act
             var result = await _controller.Proxy(new PostProxyRequest() { 
@@ -97,7 +96,7 @@ namespace ExtService.GateWay.Tests.Controllers
             _controller.ControllerContext.HttpContext = context;
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<BillingHandlerModel>(), default))
-                .ReturnsAsync(new ServiceResponse<bool> { IsSuccess = true });
+                .ReturnsAsync(new ServiceResponse<BillingResponse> { IsSuccess = true });
 
             _mediatorMock.Setup(m => m.Send(It.IsAny<ProxyRequest>(), default))
                 .ReturnsAsync(new ServiceResponse<HttpContent> { IsSuccess = true, Data = new StringContent("response data") });

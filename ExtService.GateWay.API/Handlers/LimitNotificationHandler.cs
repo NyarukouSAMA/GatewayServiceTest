@@ -1,26 +1,30 @@
 ﻿using ExtService.GateWay.API.Abstractions.Factories;
 using ExtService.GateWay.API.Abstractions.Services;
-using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
+using ExtService.GateWay.API.Models.Options;
 using ExtService.GateWay.API.Models.QueueMessages;
-using ExtService.GateWay.API.Models.ServiceModels;
 using MediatR;
+using Microsoft.Extensions.Options;
 
 namespace ExtService.GateWay.API.Handlers
 {
     public class LimitNotificationHandler : IRequestHandler<LimitNotificationHandlerModel, ServiceResponse<bool>>
     {
         private readonly ILimitCheckServiceFactory _limitCheckServiceFactory;
-        private readonly IQueueService _queueService;
+        private readonly IRabbitMQPublisherService _queueService;
+        private readonly IOptions<NotificationExchangeOptions> _notificationExchangeOptions;
         private readonly ILogger<BillingHandler> _logger;
 
-        public LimitNotificationHandler(ILimitCheckServiceFactory limitCheckServiceFactory,
-            IQueueService queueService,
+        public LimitNotificationHandler(
+            ILimitCheckServiceFactory limitCheckServiceFactory,
+            IRabbitMQPublisherService queueService,
+            IOptions<NotificationExchangeOptions> notificationExchangeOptions,
             ILogger<BillingHandler> logger)
         {
             _limitCheckServiceFactory = limitCheckServiceFactory;
             _queueService = queueService;
+            _notificationExchangeOptions = notificationExchangeOptions;
             _logger = logger;
         }
 
@@ -49,8 +53,21 @@ namespace ExtService.GateWay.API.Handlers
                     };
                 }
 
-                var queueResult = await _queueService.PublishToQueue(QueueConstants.LimitNotofocationExchange,
-                    QueueConstants.LimitNotofocationQueue,
+                if (_notificationExchangeOptions.Value == null)
+                {
+                    string headerMessage = "Не удалось получить настройки обмена для отправки уведомлений о лимите.";
+                    _logger.LogError(headerMessage);
+
+                    return new ServiceResponse<bool>
+                    {
+                        IsSuccess = false,
+                        StatusCode = StatusCodes.Status500InternalServerError,
+                        ErrorMessage = headerMessage
+                    };
+                }
+
+                var queueResult = await _queueService.PublishToQueue(_notificationExchangeOptions.Value.ExchangeName,
+                    _notificationExchangeOptions.Value.RoutingKey,
                     new NotificationServiceMassage
                     {
                         RecipientList = checkLimitResult.Data.RecipientList,

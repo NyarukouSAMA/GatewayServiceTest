@@ -126,6 +126,7 @@ namespace ExtService.GateWay.API.Controllers.V2
             }
             #endregion
 
+            #region Get billing info
             var billingResponce = await _mediator.Send(new BillingHandlerModel
             {
                 ClientId = clientId,
@@ -144,10 +145,10 @@ namespace ExtService.GateWay.API.Controllers.V2
                     RequestData = requestBody
                 }));
 
-                //Check notification table (call check notification service) and send notification to rabbitmq (send notification service)
+                #region Check notification table (call check notification service) and send notification to rabbitmq (send notification service)
                 if (billingResponce.StatusCode == StatusCodes.Status429TooManyRequests)
                 {
-                    var checkNotificationResponce = await _mediator.Send(new LimitNotificationHandlerModel
+                    var limitNotificationResponce = await _mediator.Send(new LimitNotificationHandlerModel
                     {
                         BillingId = billingResponce.Data.BillingId,
                         RequestLimit = billingResponce.Data.RequestLimit,
@@ -155,21 +156,24 @@ namespace ExtService.GateWay.API.Controllers.V2
                         BillingConfigId = billingResponce.Data.BillingConfigId
                     });
 
-                    if (!checkNotificationResponce.IsSuccess)
+                    if (!limitNotificationResponce.IsSuccess)
                     {
-                        _requestLogger.LogError(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                        _requestLogger.LogWarning(JsonConvert.SerializeObject(new LoggingRequest<string, string>
                         {
-                            ErrorMessage = checkNotificationResponce.ErrorMessage,
-                            IsSuccess = checkNotificationResponce.IsSuccess,
-                            StatusCode = checkNotificationResponce.StatusCode,
+                            ErrorMessage = limitNotificationResponce.ErrorMessage,
+                            IsSuccess = limitNotificationResponce.IsSuccess,
+                            StatusCode = limitNotificationResponce.StatusCode,
                             RequestData = requestBody
                         }));
                     }
                 }
+                #endregion
 
                 return StatusCode(billingResponce.StatusCode, billingResponce.ErrorMessage);
             }
+            #endregion
 
+            #region Proxy request
             var request = new ProxyRequest
             {
                 Method = HttpMethod.Post,
@@ -191,9 +195,54 @@ namespace ExtService.GateWay.API.Controllers.V2
                 }));
                 return StatusCode(proxyResponce.StatusCode, proxyResponce.ErrorMessage);
             }
+            #endregion
 
             var stringContent = await proxyResponce.Data.ReadAsStringAsync();
 
+            #region Check notification trigger and send notification
+            var checkNotificationResponce = await _mediator.Send(new LimitNotificationHandlerModel
+            {
+                BillingId = billingResponce.Data.BillingId,
+                RequestLimit = billingResponce.Data.RequestLimit,
+                RequestCount = billingResponce.Data.RequestCount,
+                BillingConfigId = billingResponce.Data.BillingConfigId
+            });
+
+            if (!checkNotificationResponce.IsSuccess)
+            {
+                _requestLogger.LogWarning(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                {
+                    ErrorMessage = checkNotificationResponce.ErrorMessage,
+                    IsSuccess = checkNotificationResponce.IsSuccess,
+                    StatusCode = checkNotificationResponce.StatusCode,
+                    RequestData = requestBody
+                }));
+            }
+            #endregion
+
+            #region Cache response
+            var cacheResponce = await _mediator.Send(new SetProxyCacheHandlerModel
+            {
+                RequestBodyAsKeyInput = requestBody,
+                KeyPrefix = requestContent.MethodName,
+                ResponseBody = stringContent,
+                ContentType = proxyResponce.Data.Headers.ContentType?.ToString(),
+                StatusCode = proxyResponce.StatusCode
+            });
+
+            if (!cacheResponce.IsSuccess)
+            {
+                _requestLogger.LogWarning(JsonConvert.SerializeObject(new LoggingRequest<string, string>
+                {
+                    ErrorMessage = cacheResponce.ErrorMessage,
+                    IsSuccess = cacheResponce.IsSuccess,
+                    StatusCode = cacheResponce.StatusCode,
+                    RequestData = requestBody
+                }));
+            }
+            #endregion
+
+            #region Log request\response object and return response
             _requestLogger.LogInformation(JsonConvert.SerializeObject(new LoggingRequest<string, string>
             {
                 ErrorMessage = proxyResponce.ErrorMessage,
@@ -209,6 +258,7 @@ namespace ExtService.GateWay.API.Controllers.V2
                 ContentType = proxyResponce.Data.Headers.ContentType?.ToString(),
                 StatusCode = proxyResponce.StatusCode
             };
+            #endregion
         }
     }
 }

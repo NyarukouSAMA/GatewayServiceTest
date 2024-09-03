@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace ExtService.GateWay.API.Models.ServiceModels
+﻿namespace ExtService.GateWay.API.Models.ServiceModels
 {
     public class LimitCheckResponse
     {

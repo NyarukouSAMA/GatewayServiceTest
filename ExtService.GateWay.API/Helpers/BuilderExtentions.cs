@@ -24,6 +24,8 @@ using System.Data;
 using System.Security.Cryptography;
 using ExtService.GateWay.API.Abstractions.Services;
 using Microsoft.OpenApi.Models;
+using ExtService.GateWay.API.Services.SQueue;
+using ExtService.GateWay.API.Services.SCache;
 
 namespace ExtService.GateWay.API.Helpers
 {
@@ -34,6 +36,7 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.Configure<KeyCloakOptions>(builder.Configuration.GetSection(KeyCloakOptions.KeyCloakConfigSection));
             builder.Services.Configure<MockupOptions>(builder.Configuration.GetSection(MockupOptions.MockupOptionsSection));
             builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.ProxyOptionsSection));
+            builder.Services.Configure<RabbitMQOptions>(builder.Configuration.GetSection(RabbitMQOptions.RabbitMQOptionsSection));
             return builder;
         }
 
@@ -127,6 +130,25 @@ namespace ExtService.GateWay.API.Helpers
 
             builder.Services.AddSingleton<IDBManager, DBManager>();
 
+            return builder;
+        }
+
+        public static WebApplicationBuilder RegisterQueueService(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddSingleton<IRabbitMQConnectionProvider, RabbitMQConnectionProvider>();
+
+            builder.Services.AddTransient<IRabbitMQPublisherService, RabbitMQPublisherService>();
+            return builder;
+        }
+
+        public static WebApplicationBuilder RegisterCacheService(this WebApplicationBuilder builder)
+        {
+            builder.Services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+            });
+
+            builder.Services.AddScoped<ICacheService, RedisCacheService>();
             return builder;
         }
 

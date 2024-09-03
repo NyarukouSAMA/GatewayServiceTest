@@ -1,10 +1,8 @@
-﻿using Dapper;
-using ExtService.GateWay.API.Abstractions.Services;
+﻿using ExtService.GateWay.API.Abstractions.Services;
 using ExtService.GateWay.API.Abstractions.UnitsOfWork;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
 using ExtService.GateWay.API.Models.ServiceModels;
-using ExtService.GateWay.API.Services.SBilling;
 using System.Data;
 
 namespace ExtService.GateWay.API.Services.SLimitCheck

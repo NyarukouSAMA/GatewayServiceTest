@@ -14,6 +14,12 @@ builder.RegisterJWTTokenAuth();
 // Register DBService
 builder.RegisterDBService();
 
+// Register RabbitMQ service
+builder.RegisterQueueService();
+
+// Register Redis Cache service
+builder.RegisterCacheService();
+
 // Register MediatR
 builder.RegisterMediatR();
 
