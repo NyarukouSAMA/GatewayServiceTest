@@ -1,3 +1,7 @@
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using Asp.Versioning.Conventions;
+using ExtService.GateWay.API;
 using ExtService.GateWay.API.Helpers;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,16 +27,29 @@ builder.RegisterCacheService();
 // Register MediatR
 builder.RegisterMediatR();
 
-// Configure swagger
-builder.ConfigureSwaggerGen();
-
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
+// Configures the API versioning
+builder.Services.AddApiVersioning(opt =>
+{
+    opt.ReportApiVersions = true;
+    opt.AssumeDefaultVersionWhenUnspecified = true;
+    opt.DefaultApiVersion = new ApiVersion(1, 0);
+}).AddMvc().AddApiExplorer(opt =>
+{
+    opt.GroupNameFormat = "'v'VVV";
+    opt.SubstituteApiVersionInUrl = true;
+});
+
+// Register controllers using NewtonsoftJson as serialization provider
 builder.Services.AddControllers().AddNewtonsoftJson();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
+
+// Configure swagger
+// builder.ConfigureSwaggerGen();
+// Add swagger generation
 builder.Services.AddSwaggerGen();
+builder.Services.ConfigureOptions<GateWaySwaggerGenOptions>();
 
 var app = builder.Build();
 
@@ -42,7 +59,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(opt =>
     {
-        opt.SwaggerEndpoint("/swagger/v1/swagger.json", "ExtService.GateWay.API v1");
+        foreach (var description in app.Services.GetRequiredService<IApiVersionDescriptionProvider>().ApiVersionDescriptions)
+        {
+            opt.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
     });
 }
 

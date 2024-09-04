@@ -10,15 +10,12 @@ namespace ExtService.GateWay.API.Services.SLimitCheck
     public class LimitCheckService : ILimitCheckService
     {
         private readonly IDBManager _dbManager;
-        private readonly IDbConnection _connection;
         private readonly ILogger<LimitCheckService> _logger;
 
         public LimitCheckService(IDBManager dbManager,
-            IDbConnection dbConnection,
             ILogger<LimitCheckService> logger)
         {
             _dbManager = dbManager;
-            _connection = dbConnection;
             _logger = logger;
         }
 

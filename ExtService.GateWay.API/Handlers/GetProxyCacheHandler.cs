@@ -20,7 +20,7 @@ namespace ExtService.GateWay.API.Handlers
         {
             try
             {
-                var cacheResult = await _cacheService.GetCachedDataAsync<ProxyCache>(request.RequestBodyAsKeyInput, key => $"{request.KeyPrefix}:{key}");
+                var cacheResult = await _cacheService.GetCachedDataAsync<ProxyCache>(request.RequestBodyAsKeyInput, request.KeyPrefix);
                 if (!cacheResult.IsSuccess)
                 {
                     return new ServiceResponse<ProxyCache>

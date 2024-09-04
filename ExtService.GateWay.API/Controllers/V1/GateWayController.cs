@@ -1,4 +1,5 @@
-﻿using ExtService.GateWay.API.Constants;
+﻿using Asp.Versioning;
+using ExtService.GateWay.API.Constants;
 using ExtService.GateWay.API.Models.HandlerModels;
 using ExtService.GateWay.API.Models.Logging;
 using ExtService.GateWay.API.Models.Requests.V1;
@@ -12,8 +13,9 @@ using Newtonsoft.Json.Linq;
 
 namespace ExtService.GateWay.API.Controllers.V1
 {
+    [ApiVersion("1.0")]
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class GateWayController : ControllerBase
     {
         private readonly IMediator _mediator;

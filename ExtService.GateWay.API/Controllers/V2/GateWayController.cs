@@ -9,11 +9,13 @@ using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 using ExtService.GateWay.API.Models.Requests.V2;
+using Asp.Versioning;
 
 namespace ExtService.GateWay.API.Controllers.V2
 {
+    [ApiVersion("2.0")]
     [ApiController]
-    [Route("api/v1/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     public class GateWayController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -88,7 +90,7 @@ namespace ExtService.GateWay.API.Controllers.V2
                 var getProxyCacheResult = await _mediator.Send(new GetProxyCacheHandlerModel
                 {
                     RequestBodyAsKeyInput = requestBody,
-                    KeyPrefix = requestContent.MethodName,
+                    KeyPrefix = $"{requestContent.MethodName}:{requestContent.SubMethodName}",
                 });
 
                 if (!getProxyCacheResult.IsSuccess && getProxyCacheResult.StatusCode != StatusCodes.Status404NotFound)
@@ -224,7 +226,7 @@ namespace ExtService.GateWay.API.Controllers.V2
             var cacheResponce = await _mediator.Send(new SetProxyCacheHandlerModel
             {
                 RequestBodyAsKeyInput = requestBody,
-                KeyPrefix = requestContent.MethodName,
+                KeyPrefix = $"{requestContent.MethodName}:{requestContent.SubMethodName}",
                 ResponseBody = stringContent,
                 ContentType = proxyResponce.Data.Headers.ContentType?.ToString(),
                 StatusCode = proxyResponce.StatusCode

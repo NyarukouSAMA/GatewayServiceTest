@@ -30,7 +30,7 @@ namespace ExtService.GateWay.API.Handlers
                         ContentType = request.ContentType,
                         StatusCode = request.StatusCode
                     },
-                    key => $"{request.KeyPrefix}:{key}");
+                    request.KeyPrefix);
 
                 if (!cacheResult.IsSuccess)
                 {

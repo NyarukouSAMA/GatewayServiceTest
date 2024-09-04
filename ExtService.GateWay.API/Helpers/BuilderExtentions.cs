@@ -26,6 +26,7 @@ using ExtService.GateWay.API.Abstractions.Services;
 using Microsoft.OpenApi.Models;
 using ExtService.GateWay.API.Services.SQueue;
 using ExtService.GateWay.API.Services.SCache;
+using ExtService.GateWay.API.Services.SLimitCheck;
 
 namespace ExtService.GateWay.API.Helpers
 {
@@ -146,6 +147,7 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddStackExchangeRedisCache(options =>
             {
                 options.Configuration = builder.Configuration.GetConnectionString("RedisConnection");
+                options.InstanceName = "ExtService.GateWay.API";
             });
 
             builder.Services.AddScoped<ICacheService, RedisCacheService>();
@@ -170,11 +172,15 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddKeyedTransient<IProxingService, ProxyMockup>(ServiceNames.ProxingMockupName);
             builder.Services.AddKeyedTransient<IProxingService, ServiceProxing>(ServiceNames.ProxingServiceName);
 
+            builder.Services.AddTransient<LimitCheckMockup>();
+            builder.Services.AddTransient<LimitCheckService>();
+
             // Register factories
             builder.Services.AddSingleton<IBillingServiceFactory, BillingServiceFactory>();
             builder.Services.AddSingleton<IClientIdentificationServiceFactory, ClientIdentificationServiceFactory>();
             builder.Services.AddSingleton<ISearchMethodServiceFactory, SearchMethodServiceFactory>();
             builder.Services.AddSingleton<IProxingServiceFactory, ProxingServiceFactory>();
+            builder.Services.AddSingleton<ILimitCheckServiceFactory, LimitCheckServiceFactory>();
 
             // Register handlers
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
@@ -188,8 +194,17 @@ namespace ExtService.GateWay.API.Helpers
                 opt.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "ExtService.GateWay.API",
-                    Version = "v1"
+                    Version = "v1",
+                    Description = "Gateway service v 1.0 - base functionality",
                 });
+
+                opt.SwaggerDoc("v2", new OpenApiInfo
+                {
+                    Title = "ExtService.GateWay.API",
+                    Version = "v2",
+                    Description = "Gateway service v 2.0 - added caching and notification functionality",
+                });
+
                 opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,

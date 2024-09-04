@@ -5,14 +5,23 @@ namespace ExtService.GateWay.API.Helpers
 {
     public static class CacheHelpers
     {
-        public static string GenerateCacheKey(this string keyInput, Func<string, string> keyModifier)
+        public static string GenerateCacheKey(this string keyInput,
+            string keyPrefix = null,
+            Func<string, string> keyModifier = null)
         {
-            return keyModifier(keyInput.TransformString()).GetMD5HashFromString();
-        }
+            var key = keyInput.TransformString();
 
-        public static string GenerateCacheKey(this string keyInput)
-        {
-            return keyInput.TransformString().GetMD5HashFromString();
+            if (keyModifier != null)
+            {
+                key = keyModifier(key).GetMD5HashFromString();
+            }
+
+            if (keyPrefix != null)
+            {
+                key = $"{keyPrefix}:{key}";
+            }
+
+            return key;
         }
 
         private static string GetMD5HashFromString(this string stringInput)

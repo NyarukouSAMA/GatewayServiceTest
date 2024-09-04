@@ -64,13 +64,18 @@ services:
     networks:
       - app-network
   
-  redis-cache:
-    image: redis:latest
-    container_name: redis-cache
+  redis-stack:
+    image: redis/redis-stack:latest
+    container_name: redis-stack
     ports:
       - "6379:6379"
+      - "8001:8001"
+    environment:
+      - REDIS_ARGS=--requirepass redispassword
     networks:
       - app-network
+    volumes:
+      - redis-data:/data
 
   extservice.gateway.api:
     image: ${DOCKER_REGISTRY-}extservicegatewayapi
@@ -90,6 +95,8 @@ services:
 
 volumes:
   postgres-data:
+    driver: local
+  redis-data:
     driver: local
 
 networks:

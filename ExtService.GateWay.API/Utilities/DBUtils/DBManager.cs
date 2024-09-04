@@ -7,7 +7,6 @@ namespace ExtService.GateWay.API.Utilities.DBUtils
 {
     public class DBManager : IDBManager
     {
-        private readonly GateWayContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         private readonly Lazy<IIdentificationRepository> _identificationRepository;
@@ -16,10 +15,8 @@ namespace ExtService.GateWay.API.Utilities.DBUtils
         private readonly Lazy<IMethodInfoRepository> _methodInfoRepository;
         private readonly Lazy<INotificationInfoRepository> _notificationInfoRepository;
 
-        public DBManager(GateWayContext context,
-            IHttpContextAccessor httpContextAccessor)
+        public DBManager(IHttpContextAccessor httpContextAccessor)
         {
-            _context = context;
             _httpContextAccessor = httpContextAccessor;
 
             _identificationRepository = new Lazy<IIdentificationRepository>(Initialize<IIdentificationRepository>((scopedProvider) =>
@@ -56,12 +53,17 @@ namespace ExtService.GateWay.API.Utilities.DBUtils
 
         public async Task<int> CommitAsync()
         {
-            return await _context.SaveChangesAsync();
-        }
+            var httpContext = _httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                string message = "HttpContext can't be null.";
 
-        public void Dispose()
-        {
-            _context?.Dispose();
+                throw new ArgumentNullException(message);
+            }
+
+            var scopedProvider = httpContext.RequestServices;
+
+            return await scopedProvider.GetRequiredService<GateWayContext>().SaveChangesAsync();
         }
 
         /// <summary>

@@ -2,7 +2,7 @@
 
 namespace ExtService.GateWay.API.Abstractions.UnitsOfWork
 {
-    public interface IDBManager : IDisposable
+    public interface IDBManager
     {
         IIdentificationRepository IdentificationRepository { get; }
         IBillingConfigRepository BillingConfigRepository { get; }

@@ -25,20 +25,13 @@ namespace ExtService.GateWay.API.Services.SCache
         }
 
         public async Task<ServiceResponse<TCachedData>> GetCachedDataAsync<TCachedData>(string keyInput,
+            string keyPrefix = null,
             Func<string, string> keyModifyer = null)
         {
             try
             {
-                string key = string.Empty;
-                if (keyModifyer != null)
-                {
-                    key = keyInput.GenerateCacheKey(keyModifyer);
-                }
-                else
-                {
-                    key = keyInput.GenerateCacheKey();
-                }
-
+                string key = keyInput.GenerateCacheKey(keyPrefix, keyModifyer);
+                
                 var cachedData = await _distributedCache.GetStringAsync(key);
                 if (cachedData == null)
                 {
@@ -71,19 +64,12 @@ namespace ExtService.GateWay.API.Services.SCache
         }
 
         public async Task<ServiceResponse<string>> GetCachedDataAsync(string keyInput,
+            string keyPrefix = null,
             Func<string, string> keyModifyer = null)
         {
             try
             {
-                string key = string.Empty;
-                if (keyModifyer != null)
-                {
-                    key = keyInput.GenerateCacheKey(keyModifyer);
-                }
-                else
-                {
-                    key = keyInput.GenerateCacheKey();
-                }
+                string key = keyInput.GenerateCacheKey(keyPrefix, keyModifyer);
 
                 var cachedData = await _distributedCache.GetStringAsync(key);
                 if (cachedData == null)
@@ -118,21 +104,13 @@ namespace ExtService.GateWay.API.Services.SCache
 
         public async Task<ServiceResponse<bool>> UpsertDataAsync<TCachedData>(string keyInput,
             TCachedData data,
+            string keyPrefix = null,
             Func<string, string> keyModifyer = null,
             TimeSpan ? expiration = null)
         {
             try
             {
-                string key = string.Empty;
-
-                if (keyModifyer != null)
-                {
-                    key = keyInput.GenerateCacheKey(keyModifyer);
-                }
-                else
-                {
-                    key = keyInput.GenerateCacheKey();
-                }
+                string key = keyInput.GenerateCacheKey(keyPrefix, keyModifyer);
 
                 if (expiration == null)
                 {
@@ -170,21 +148,13 @@ namespace ExtService.GateWay.API.Services.SCache
 
         public async Task<ServiceResponse<bool>> UpsertDataAsync(string keyInput,
             string data,
+            string keyPrefix = null,
             Func<string, string> keyModifyer = null,
             TimeSpan ? expiration = null)
         {
             try
             {
-                string key = string.Empty;
-
-                if (keyModifyer != null)
-                {
-                    key = keyInput.GenerateCacheKey(keyModifyer);
-                }
-                else
-                {
-                    key = keyInput.GenerateCacheKey();
-                }
+                string key = keyInput.GenerateCacheKey(keyPrefix, keyModifyer);
 
                 if (expiration == null)
                 {
