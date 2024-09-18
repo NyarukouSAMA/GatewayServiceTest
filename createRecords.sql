@@ -28,3 +28,9 @@ INSERT INTO public."BillingConfig"
 ("BillingConfigId", "PeriodInDays", "RequestLimitPerPeriod", "StartDate", "EndDate", "IdentificationId", "MethodId")
 VALUES
 ('bbd9a9f7-8344-4e9c-8e50-d0d8421dbf22', 1, 25, '2024-01-01', '2024-12-31', 'e1b4a9c5-bb28-4c8c-9f4a-4f56d8a1f6f3', 'c6c72f43-ec44-4d77-9fb8-1bbf7b6c7a9b');
+
+-- Insert data into NotificationInfo table
+INSERT INTO public."NotificationInfo"
+("NotificationId", "NotificationLimitPercentage", "Message", "BillingConfigId", "RecipientList", "Subject")
+VALUES
+('c8f1b6e1-2a4a-4b1d-9e8c-7b5e6e1c4a7b', 50, 'Test Message', 'bbd9a9f7-8344-4e9c-8e50-d0d8421dbf22', 'test1@max.test;test2@max.test', 'Test Subject');

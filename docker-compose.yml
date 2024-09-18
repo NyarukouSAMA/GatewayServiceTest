@@ -78,13 +78,24 @@ services:
       - redis-data:/data
 
   extservice.gateway.api:
-    image: ${DOCKER_REGISTRY-}extservicegatewayapi
     build:
       context: .
       dockerfile: ExtService.GateWay.API/Dockerfile
     ports:
       - "80"
       - "443"
+    depends_on:
+      - rabbitmq
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+    networks:
+      - app-network
+  
+  extservice.correspondence:
+    build:
+      context: .
+      dockerfile: ExtService.Correspondence/Dockerfile
     depends_on:
       - rabbitmq
     environment:

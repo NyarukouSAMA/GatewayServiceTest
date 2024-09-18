@@ -178,7 +178,9 @@ namespace ExtService.GateWay.DBContext
                     .HasForeignKey(n => n.BillingConfigId);
                 entity.HasOne(n => n.Billing)
                     .WithMany(b => b.NotificationInfoSet)
-                    .HasForeignKey(n => n.BillingId);
+                    .HasForeignKey(n => n.BillingId)
+                    .OnDelete(DeleteBehavior.SetNull)
+                    .IsRequired(false);
             });
         }
 

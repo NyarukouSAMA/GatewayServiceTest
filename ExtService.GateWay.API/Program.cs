@@ -1,6 +1,5 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
-using Asp.Versioning.Conventions;
 using ExtService.GateWay.API;
 using ExtService.GateWay.API.Helpers;
 

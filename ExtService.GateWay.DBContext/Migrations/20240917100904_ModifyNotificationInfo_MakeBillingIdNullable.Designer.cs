@@ -3,6 +3,7 @@ using System;
 using ExtService.GateWay.DBContext;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ExtService.GateWay.DBContext.Migrations
 {
     [DbContext(typeof(GateWayContext))]
-    partial class GateWayContextModelSnapshot : ModelSnapshot
+    [Migration("20240917100904_ModifyNotificationInfo_MakeBillingIdNullable")]
+    partial class ModifyNotificationInfo_MakeBillingIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -206,6 +209,7 @@ namespace ExtService.GateWay.DBContext.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("BillingId")
+                        .IsRequired()
                         .HasColumnType("uuid");
 
                     b.Property<string>("Message")
@@ -391,7 +395,8 @@ namespace ExtService.GateWay.DBContext.Migrations
                     b.HasOne("ExtService.GateWay.DBContext.DBModels.Billing", "Billing")
                         .WithMany("NotificationInfoSet")
                         .HasForeignKey("BillingId")
-                        .OnDelete(DeleteBehavior.SetNull);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Billing");
 

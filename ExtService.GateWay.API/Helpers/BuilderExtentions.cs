@@ -38,6 +38,7 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.Configure<MockupOptions>(builder.Configuration.GetSection(MockupOptions.MockupOptionsSection));
             builder.Services.Configure<ProxyOptions>(builder.Configuration.GetSection(ProxyOptions.ProxyOptionsSection));
             builder.Services.Configure<RabbitMQOptions>(builder.Configuration.GetSection(RabbitMQOptions.RabbitMQOptionsSection));
+            builder.Services.Configure<NotificationExchangeOptions>(builder.Configuration.GetSection(NotificationExchangeOptions.NotificationExchangeOptionsSection));
             return builder;
         }
 
@@ -129,7 +130,7 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddScoped<IMethodInfoRepository, MethodInfoRepository>();
             builder.Services.AddScoped<INotificationInfoRepository, NotificationInfoRepository>();
 
-            builder.Services.AddSingleton<IDBManager, DBManager>();
+            builder.Services.AddScoped<IDBManager, DBManager>();
 
             return builder;
         }

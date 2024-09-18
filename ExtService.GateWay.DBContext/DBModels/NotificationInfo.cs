@@ -17,7 +17,7 @@ namespace ExtService.GateWay.DBContext.DBModels
         [Required]
         public string Message { get; set; }
         //M-to-1 links
-        public Guid BillingId { get; set; }
+        public Guid? BillingId { get; set; }
         public Billing Billing { get; set; }
         [Required]
         public Guid BillingConfigId { get; set; }

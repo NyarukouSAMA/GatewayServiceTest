@@ -3,7 +3,6 @@ using ExtService.GateWay.API.Abstractions.UnitsOfWork;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.HandlerModels;
 using ExtService.GateWay.API.Models.ServiceModels;
-using System.Data;
 
 namespace ExtService.GateWay.API.Services.SLimitCheck
 {
@@ -25,7 +24,8 @@ namespace ExtService.GateWay.API.Services.SLimitCheck
             {
                 var notificationRecord = await _dbManager?.NotificationInfoRepository
                     ?.RetrieveAsync(notificationRecord => notificationRecord.BillingConfigId == limitCheckRequest.BillingConfigId
-                    && notificationRecord.BillingId != limitCheckRequest.BillingId
+                    && (!notificationRecord.BillingId.HasValue 
+                        || notificationRecord.BillingId.Value != limitCheckRequest.BillingId)
                     && notificationRecord.NotificationLimitPercentage <= limitCheckRequest.RequestCount * 100 / limitCheckRequest.RequestLimit);
 
                 if (notificationRecord == null)
@@ -44,7 +44,8 @@ namespace ExtService.GateWay.API.Services.SLimitCheck
                 var result = await _dbManager?.NotificationInfoRepository?.UpdateAsync(notificationSetter => notificationSetter
                     .SetProperty(dbRecord => dbRecord.BillingId, limitCheckRequest.BillingId),
                     dbRecord => dbRecord.NotificationId == notificationRecord.NotificationId
-                    && dbRecord.BillingId != limitCheckRequest.BillingId);
+                    && (!notificationRecord.BillingId.HasValue
+                        || notificationRecord.BillingId.Value != limitCheckRequest.BillingId));
 
                 if (result == 0) {
                     return new ServiceResponse<LimitCheckResponse>
