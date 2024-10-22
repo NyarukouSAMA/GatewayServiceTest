@@ -82,8 +82,7 @@ services:
       context: .
       dockerfile: ExtService.GateWay.API/Dockerfile
     ports:
-      - "80"
-      - "443"
+      - "8888:80"
     depends_on:
       - rabbitmq
     environment:

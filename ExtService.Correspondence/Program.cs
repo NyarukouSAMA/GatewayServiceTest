@@ -35,12 +35,6 @@ namespace ExtService.Correspondence
                         .GetSection(EmailExchangeOptions.EmailExchangeOptionsSection)
                         .Get<EmailExchangeOptions>();
 
-                    services.AddSingleton(serviceProvider => new ExchangeService((ExchangeVersion)exchangeOptions.ExchangeVersion)
-                    {
-                        Credentials = new WebCredentials(exchangeOptions.UserName, exchangeOptions.Password, exchangeOptions.Domain),
-                        Url = new Uri(exchangeOptions.ExchangeUri)
-                    });
-
                     services.AddScoped<IEmailService, EmailService>();
 
                     services.AddHostedService<ConsumerWorker>();

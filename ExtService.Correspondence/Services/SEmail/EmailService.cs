@@ -1,22 +1,21 @@
 ﻿using ExtService.Correspondence.Abstractions.Services;
 using ExtService.Correspondence.Models.HandlerModels;
 using ExtService.Correspondence.Models.Options;
+using MailKit.Net.Smtp;
 using Microsoft.Exchange.WebServices.Data;
 using Microsoft.Extensions.Options;
+using MimeKit;
 
 namespace ExtService.Correspondence.Services.SEmail
 {
     public class EmailService : IEmailService
     {
-        private readonly ExchangeService _exchangeService;
         private readonly EmailExchangeOptions _emailOptions;
         private readonly ILogger<EmailService> _logger;
 
-        public EmailService(ExchangeService exchangeService,
-            IOptions<EmailExchangeOptions> emailOptions,
+        public EmailService(IOptions<EmailExchangeOptions> emailOptions,
             ILogger<EmailService> logger)
         {
-            _exchangeService = exchangeService;
             _emailOptions = emailOptions.Value;
             _logger = logger;
         }
@@ -25,27 +24,69 @@ namespace ExtService.Correspondence.Services.SEmail
         {
             try
             {
-                await System.Threading.Tasks.Task.Run(() =>
+                var message = new MimeMessage();
+
+                // Set the message sender
+                message.From.Add(new MailboxAddress(_emailOptions.FromDisplayName, _emailOptions.FromEmailAddress));
+
+                // Set the recipients
+                var recipients = emailMessage.RecipientListSemikolonSeparated
+                    .Split(';', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(email => email.Trim());
+
+                foreach (var recipient in recipients)
                 {
-                    var email = new EmailMessage(_exchangeService)
-                    {
-                        Subject = emailMessage.Subject,
-                        Body = new MessageBody(emailMessage.BodyType == 1 ? BodyType.Text : BodyType.HTML, emailMessage.Message)
-                    };
+                    message.To.Add(MailboxAddress.Parse(recipient));
+                }
 
-                    email.ToRecipients
-                        .AddRange(emailMessage.RecipientListSemikolonSeparated.Split(';')
-                        .Select(recipientAddress => recipientAddress.Trim()));
+                // Set the subject
+                message.Subject = emailMessage.Subject;
 
-                    if (_emailOptions.SaveEmailCopy)
-                    {
-                        email.SendAndSaveCopy(_emailOptions.SaveCopyFolderWellKnownName);
-                    }
-                    else
-                    {
-                        email.Send();
-                    }
-                });
+                // Create the body
+                var bodyBuilder = new BodyBuilder();
+
+                if (emailMessage.BodyType == 1)
+                {
+                    bodyBuilder.TextBody = emailMessage.Message;
+                }
+                else
+                {
+                    bodyBuilder.HtmlBody = emailMessage.Message;
+                }
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                // Optionally BCC for saving email copies
+                if (_emailOptions.SaveEmailCopy &&
+                    !string.IsNullOrWhiteSpace(_emailOptions.SaveCopyEmailAddress))
+                {
+                    message.Bcc.Add(MailboxAddress.Parse(_emailOptions.SaveCopyEmailAddress));
+                }
+
+                using var smtpClient = new SmtpClient();
+
+                // Accept all SSL certificates (for self-signed certificates)
+                smtpClient.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                // Connect to the SMTP server
+                await smtpClient.ConnectAsync(
+                    _emailOptions.SmtpServer,
+                    _emailOptions.SmtpPort,
+                    _emailOptions.UseSsl);
+
+                // Authenticate if necessary
+                if (_emailOptions.UseAuthentication)
+                {
+                    await smtpClient.AuthenticateAsync(
+                        _emailOptions.SmtpUser,
+                        _emailOptions.SmtpPassword);
+                }
+
+                // Send the email
+                await smtpClient.SendAsync(message);
+
+                // Disconnect from the SMTP server
+                await smtpClient.DisconnectAsync(true);
 
                 return true;
             }
