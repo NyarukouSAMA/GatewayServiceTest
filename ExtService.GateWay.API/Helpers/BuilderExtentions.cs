@@ -173,6 +173,10 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddKeyedTransient<IProxingService, ProxyMockup>(ServiceNames.ProxingMockupName);
             builder.Services.AddKeyedTransient<IProxingService, ServiceProxing>(ServiceNames.ProxingServiceName);
 
+            builder.Services.AddKeyedTransient< IProxyContentTransformer, GetProxyContentTransformer>(HttpMethod.Get.Method);
+            builder.Services.AddKeyedTransient<IProxyContentTransformer, PostProxyContentTransformer>(HttpMethod.Post.Method);
+
+            // Register limit check strategies
             builder.Services.AddTransient<LimitCheckMockup>();
             builder.Services.AddTransient<LimitCheckService>();
 
@@ -182,6 +186,8 @@ namespace ExtService.GateWay.API.Helpers
             builder.Services.AddSingleton<ISearchMethodServiceFactory, SearchMethodServiceFactory>();
             builder.Services.AddSingleton<IProxingServiceFactory, ProxingServiceFactory>();
             builder.Services.AddSingleton<ILimitCheckServiceFactory, LimitCheckServiceFactory>();
+            builder.Services.AddSingleton<IRestProxyContentTransformerFactory, RestProxyContentTransformerFactory>();
+            builder.Services.AddSingleton<IPluginFactory, PluginFactory>();
 
             // Register handlers
             builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());

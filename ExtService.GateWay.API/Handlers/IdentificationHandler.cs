@@ -47,7 +47,8 @@ namespace ExtService.GateWay.API.Handlers
                 var searchMethodResult = await searchMethodService.GetMethodInfoAsync(new SearchMethodRequest
                 {
                     MethodName = request.MethodName,
-                    SubMethodName = request.SubMethodName
+                    SubMethodName = request.SubMethodName,
+                    HttpMethod = request.HttpMethod
                 }, cancellationToken);
 
                 if (!searchMethodResult.IsSuccess)

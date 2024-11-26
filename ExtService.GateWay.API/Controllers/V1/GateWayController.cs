@@ -68,6 +68,7 @@ namespace ExtService.GateWay.API.Controllers.V1
                 ClientId = clientId,
                 MethodName = requestContent.MethodName,
                 SubMethodName = requestContent.SubMethodName,
+                HttpMethod = HttpMethod.Post
             });
 
             if (!identificationResponce.IsSuccess)

@@ -53,7 +53,7 @@ namespace ExtService.GateWay.Tests.Services
                 ApiTimeout = 10,
                 MethodHeaders = new List<MethodHeaders>
                 {
-                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                    new MethodHeaders { HeaderName = "media-type" }
                 },
                 SubMethodInfoSet = new List<SubMethodInfo>
                 {

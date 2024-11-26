@@ -23,7 +23,24 @@ namespace ExtService.GateWay.API.Services.SMethodInfo
                         new MethodHeaders
                         {
                             HeaderName = "Content-Type",
-                            HeaderValue = "application/json"
+                            Plugin = new Plugins
+                            {
+                                PluginId = Guid.NewGuid(),
+                                PluginName = "DefaultHeaderHandler",
+                            },
+                            PluginLinks = new List<PluginLinks>
+                            {
+                                new PluginLinks
+                                {
+                                    LinkId = Guid.NewGuid(),
+                                    Parameter = new PluginParameters
+                                    {
+                                        ParameterId = Guid.NewGuid(),
+                                        ParameterName = "Content-Type",
+                                        ParameterValue = "application/json"
+                                    }
+                                }
+                            }
                         }
                     },
                     ApiTimeout = 15,

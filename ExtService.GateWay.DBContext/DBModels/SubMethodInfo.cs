@@ -12,6 +12,8 @@ namespace ExtService.GateWay.DBContext.DBModels
         public string SubMethodName { get; set; }
         [Required]
         public string SubMethodPath { get; set; }
+        [Required]
+        public string HttpMethodName { get; set; }
         //M-to-1 relationships
         [Required]
         public Guid MethodId { get; set; }

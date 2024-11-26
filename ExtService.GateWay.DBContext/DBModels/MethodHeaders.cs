@@ -10,12 +10,15 @@ namespace ExtService.GateWay.DBContext.DBModels
         public Guid MethodHeaderId { get; set; }
         [Required]
         public string HeaderName { get; set; }
-        [Required]
-        public string HeaderValue { get; set; }
         public string Description { get; set; }
         // M-to-1 relationships
         [Required]
         public Guid MethodId { get; set; }
         public MethodInfo Method { get; set; }
+        [Required]
+        public Guid PluginId { get; set; }
+        public Plugins Plugin { get; set; }
+        // 1-to-M relationships
+        public List<PluginLinks> PluginLinks { get; set; }
     }
 }

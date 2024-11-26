@@ -8,5 +8,6 @@ namespace ExtService.GateWay.API.Models.HandlerModels
         public string ClientId { get; set; }
         public string MethodName { get; set; }
         public string SubMethodName { get; set; }
+        public HttpMethod HttpMethod { get; set; }
     }
 }

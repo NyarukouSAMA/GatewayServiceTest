@@ -7,12 +7,15 @@ using Moq;
 using System.Net;
 using Xunit;
 using ExtService.GateWay.DBContext.DBModels;
+using ExtService.GateWay.API.Abstractions.Factories;
 
 namespace ExtService.GateWay.Tests.Services
 {
     public class ServiceProxingTests
     {
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
+        private readonly Mock<IRestProxyContentTransformerFactory> _mockRestProxyContentTransformerFactory;
+        private readonly Mock<IPluginFactory> _pluginFactory;
         private readonly Mock<HttpMessageHandler> _mockHttpMessageHandler;
         private readonly Mock<ILogger<ServiceProxing>> _mockLogger;
         private readonly ServiceProxing _service;
@@ -20,6 +23,8 @@ namespace ExtService.GateWay.Tests.Services
         public ServiceProxingTests()
         {
             _mockHttpClientFactory = new Mock<IHttpClientFactory>();
+            _mockRestProxyContentTransformerFactory = new Mock<IRestProxyContentTransformerFactory>();
+            _pluginFactory = new Mock<IPluginFactory>();
             _mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             _mockLogger = new Mock<ILogger<ServiceProxing>>();
 
@@ -29,7 +34,11 @@ namespace ExtService.GateWay.Tests.Services
             };
             _mockHttpClientFactory.Setup(factory => factory.CreateClient(It.IsAny<string>())).Returns(httpClient);
 
-            _service = new ServiceProxing(_mockHttpClientFactory.Object, _mockLogger.Object);
+            _service = new ServiceProxing(
+                _mockHttpClientFactory.Object,
+                _mockRestProxyContentTransformerFactory.Object,
+                _pluginFactory.Object,
+                _mockLogger.Object);
         }
 
         [Fact]
@@ -44,7 +53,7 @@ namespace ExtService.GateWay.Tests.Services
                 RequestUri = "http://localhost/test",
                 MethodHeaders = new List<MethodHeaders>() 
                 { 
-                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                    new MethodHeaders { HeaderName = "media-type" }
                 }
             };
 
@@ -81,7 +90,7 @@ namespace ExtService.GateWay.Tests.Services
                 RequestUri = "http://localhost/test",
                 MethodHeaders = new List<MethodHeaders>()
                 {
-                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                    new MethodHeaders { HeaderName = "media-type" }
                 }
             };
 
@@ -117,7 +126,7 @@ namespace ExtService.GateWay.Tests.Services
                 RequestUri = "http://localhost/test",
                 MethodHeaders = new List<MethodHeaders>()
                 {
-                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                    new MethodHeaders { HeaderName = "media-type" }
                 }
             };
 
@@ -142,7 +151,7 @@ namespace ExtService.GateWay.Tests.Services
                 RequestUri = "http://localhost/test",
                 MethodHeaders = new List<MethodHeaders>()
                 {
-                    new MethodHeaders { HeaderName = "media-type", HeaderValue = "application/json" }
+                    new MethodHeaders { HeaderName = "media-type" }
                 }
             };
 

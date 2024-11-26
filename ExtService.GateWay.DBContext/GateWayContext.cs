@@ -1,4 +1,5 @@
-﻿using ExtService.GateWay.DBContext.DBModels;
+﻿using ExtService.GateWay.DBContext.DBFunctions.PGSQLAssignableFunctions;
+using ExtService.GateWay.DBContext.DBModels;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
@@ -14,8 +15,11 @@ namespace ExtService.GateWay.DBContext
         {
         }
 
-        public DbSet<MethodInfo> MethodInfoSet { get; set; }
+        public DbSet<DBModels.MethodInfo> MethodInfoSet { get; set; }
         public DbSet<MethodHeaders> MethodHeadersSet { get; set; }
+        public DbSet<Plugins> PluginsSet { get; set; }
+        public DbSet<PluginParameters> PluginParametersSet { get; set; }
+        public DbSet<PluginLinks> PluginLinksSet { get; set; }
         public DbSet<SubMethodInfo> SubMethodInfoSet { get; set; }
         public DbSet<SystemInfo> SystemInfoSet { get; set; }
         public DbSet<UserInfo> Users { get; set; }
@@ -23,6 +27,7 @@ namespace ExtService.GateWay.DBContext
         public DbSet<BillingConfig> BillingConfigSet { get; set; }
         public DbSet<Billing> BillingSet { get; set; }
         public DbSet<NotificationInfo> NotificationInfoSet { get; set; }
+        public DbSet<TransactionLog> TransactionLogs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -43,8 +48,9 @@ namespace ExtService.GateWay.DBContext
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.HasPostgresExtension("uuid-ossp");
+            modelBuilder.HasPostgresExtension("pgcrypto");
 
-            modelBuilder.Entity<MethodInfo>(entity =>
+            modelBuilder.Entity<DBModels.MethodInfo>(entity =>
             {
                 entity.Property(m => m.MethodId)
                     .HasDefaultValueSql("uuid_generate_v4()")
@@ -63,16 +69,6 @@ namespace ExtService.GateWay.DBContext
                     .HasForeignKey(h => h.MethodId);
             });
 
-            modelBuilder.Entity<MethodHeaders>(entity =>
-            {
-                entity.Property(h => h.MethodHeaderId)
-                    .HasDefaultValueSql("uuid_generate_v4()")
-                    .IsRequired();
-                entity.HasOne(h => h.Method)
-                    .WithMany(m => m.MethodHeaders)
-                    .HasForeignKey(h => h.MethodId);
-            });
-
             modelBuilder.Entity<SubMethodInfo>(entity =>
             {
                 entity.Property(s => s.SubMethodId)
@@ -81,6 +77,61 @@ namespace ExtService.GateWay.DBContext
                 entity.HasOne(s => s.Method)
                     .WithMany(m => m.SubMethodInfoSet)
                     .HasForeignKey(s => s.MethodId);
+            });
+
+            modelBuilder.Entity<MethodHeaders>(entity =>
+            {
+                entity.Property(h => h.MethodHeaderId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasOne(h => h.Method)
+                    .WithMany(m => m.MethodHeaders)
+                    .HasForeignKey(h => h.MethodId);
+                entity.HasOne(h => h.Plugin)
+                    .WithMany(p => p.MethodHeaders)
+                    .HasForeignKey(h => h.PluginId);
+                entity.HasMany(h => h.PluginLinks)
+                    .WithOne(l => l.MethodHeader)
+                    .HasForeignKey(l => l.MethodHeaderId);
+            });
+
+            modelBuilder.Entity<Plugins>(entity =>
+            {
+                entity.Property(p => p.PluginId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasMany(p => p.MethodHeaders)
+                    .WithOne(h => h.Plugin)
+                    .HasForeignKey(h => h.PluginId);
+                entity.HasMany(p => p.PluginLinks)
+                    .WithOne(l => l.Plugin)
+                    .HasForeignKey(l => l.PluginId);
+            });
+
+            modelBuilder.Entity<PluginParameters>(entity =>
+            {
+                entity.Property(p => p.ParameterId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasMany(p => p.PluginLinks)
+                    .WithOne(l => l.Parameter)
+                    .HasForeignKey(l => l.ParameterId);
+            });
+
+            modelBuilder.Entity<PluginLinks>(entity =>
+            {
+                entity.Property(l => l.LinkId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+                entity.HasOne(l => l.Plugin)
+                    .WithMany(p => p.PluginLinks)
+                    .HasForeignKey(l => l.PluginId);
+                entity.HasOne(l => l.MethodHeader)
+                    .WithMany(h => h.PluginLinks)
+                    .HasForeignKey(l => l.MethodHeaderId);
+                entity.HasOne(l => l.Parameter)
+                    .WithMany(p => p.PluginLinks)
+                    .HasForeignKey(l => l.ParameterId);
             });
 
             modelBuilder.Entity<SystemInfo>(entity =>
@@ -182,6 +233,17 @@ namespace ExtService.GateWay.DBContext
                     .OnDelete(DeleteBehavior.SetNull)
                     .IsRequired(false);
             });
+
+            modelBuilder.Entity<TransactionLog>(entity =>
+            {
+                entity.Property(t => t.TransactionLogId)
+                    .HasDefaultValueSql("uuid_generate_v4()")
+                    .IsRequired();
+            });
+
+            modelBuilder.HasDbFunction(typeof(DecryptPluginParameterValueFunction).GetMethod("Execute"))
+                .HasSchema(DecryptPluginParameterValueFunction.Schema)
+                .HasName(DecryptPluginParameterValueFunction.FunctionName);
         }
 
     }

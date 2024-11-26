@@ -4,7 +4,9 @@ using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.DTO;
 using ExtService.GateWay.API.Models.ServiceModels;
+using ExtService.GateWay.DBContext.DBFunctions.PGSQLAssignableFunctions;
 using ExtService.GateWay.DBContext.DBModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace ExtService.GateWay.API.Services.SMethodInfo
 {
@@ -25,13 +27,42 @@ namespace ExtService.GateWay.API.Services.SMethodInfo
         {
             try
             {
-                MethodInfo methodInfo = await _dbManager?.MethodInfoRepository
-                    ?.RetrieveAsync(methodInfo => methodInfo.MethodName == searchMethodRequest.MethodName,
-                    new System.Linq.Expressions.Expression<Func<MethodInfo, object>>[]
-                    {
-                        methodInfo => methodInfo.SubMethodInfoSet.Where(sub => sub.SubMethodName == searchMethodRequest.SubMethodName),
-                        methodInfo => methodInfo.MethodHeaders
-                    });
+                MethodInfo methodInfo = await _dbManager?.MethodInfoRepository?.RetrieveAsync(query =>
+                    query
+                        .Where(MethodInfo => MethodInfo.MethodName == searchMethodRequest.MethodName)
+                        .Include(MethodInfo => MethodInfo.SubMethodInfoSet
+                            .Where(SubMethodInfo => SubMethodInfo.SubMethodName == searchMethodRequest.SubMethodName
+                                && SubMethodInfo.HttpMethodName == searchMethodRequest.HttpMethod.Method))
+                        .Include(MethodInfo => MethodInfo.MethodHeaders)
+                            .ThenInclude(MethodHeaders => MethodHeaders.Plugin)
+                        .Include(MethodInfo => MethodInfo.MethodHeaders)
+                            .ThenInclude(MethodHeaders => MethodHeaders.PluginLinks)
+                            .ThenInclude(pl => pl.Parameter)
+                        .Select(MethodInfo => new MethodInfo
+                        {
+                            MethodId = MethodInfo.MethodId,
+                            MethodName = MethodInfo.MethodName,
+                            SubMethodInfoSet = MethodInfo.SubMethodInfoSet,
+                            ApiBaseUri = MethodInfo.ApiBaseUri,
+                            ApiPrefix = MethodInfo.ApiPrefix,
+                            ApiTimeout = MethodInfo.ApiTimeout,
+                            MethodPath = MethodInfo.MethodPath,
+                            MethodHeaders = MethodInfo.MethodHeaders.Select(MethodHeaders => new MethodHeaders
+                            {
+                                HeaderName = MethodHeaders.HeaderName,
+                                Plugin = MethodHeaders.Plugin,
+                                PluginLinks = MethodHeaders.PluginLinks.Select(pl => new PluginLinks
+                                {
+                                    LinkId = pl.LinkId,
+                                    Parameter = new PluginParameters
+                                    {
+                                        ParameterId = pl.Parameter.ParameterId,
+                                        ParameterName = pl.Parameter.ParameterName,
+                                        ParameterValue = DecryptPluginParameterValueFunction.Execute(pl.Parameter.ParameterValue)
+                                    }
+                                }).ToList()
+                            }).ToList()
+                        }));
 
                 if (methodInfo == null)
                 {
@@ -91,5 +122,7 @@ namespace ExtService.GateWay.API.Services.SMethodInfo
                 };
             }
         }
+    
+
     }
 }

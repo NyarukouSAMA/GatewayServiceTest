@@ -1,7 +1,9 @@
-﻿using ExtService.GateWay.API.Abstractions.Services;
+﻿using ExtService.GateWay.API.Abstractions.Factories;
+using ExtService.GateWay.API.Abstractions.Services;
 using ExtService.GateWay.API.Helpers;
 using ExtService.GateWay.API.Models.Common;
 using ExtService.GateWay.API.Models.ServiceModels;
+using ExtService.GateWay.DBContext.DBModels;
 using System.Text;
 
 namespace ExtService.GateWay.API.Services.SProxing
@@ -9,12 +11,18 @@ namespace ExtService.GateWay.API.Services.SProxing
     public class ServiceProxing : IProxingService
     {
         private readonly HttpClient _httpClient;
+        private readonly IRestProxyContentTransformerFactory _restProxyContentTransformerFactory;
+        private readonly IPluginFactory _pluginFactory;
         private readonly ILogger<ServiceProxing> _logger;
 
         public ServiceProxing(IHttpClientFactory httpClientFactory,
+            IRestProxyContentTransformerFactory restProxyContentTransformerFactory,
+            IPluginFactory pluginFactory,
             ILogger<ServiceProxing> logger)
         {
             _httpClient = httpClientFactory.CreateClient();
+            _restProxyContentTransformerFactory = restProxyContentTransformerFactory;
+            _pluginFactory = pluginFactory;
             _logger = logger;
         }
 
@@ -26,7 +34,30 @@ namespace ExtService.GateWay.API.Services.SProxing
                 {
                     foreach (var header in request.MethodHeaders)
                     {
-                        _httpClient.DefaultRequestHeaders.Add(header.HeaderName, header.HeaderValue);
+                        IPlugin headerHandler = _pluginFactory.GetPlugin(header.Plugin.PluginName);
+
+                        Dictionary<string, PluginParameters> pluginParameters = header.PluginLinks
+                            .Select(link => link.Parameter)
+                            .ToDictionary(pp => pp.ParameterName);
+
+                        var headerResult = await headerHandler.ExecuteAsync(
+                            header,
+                            pluginParameters,
+                            cancellationToken);
+                        if (!headerResult.IsSuccess)
+                        {
+                            string errorMessage = $"Во время исполнения плагина {header.Plugin.PluginName} возникла ошибка.";
+
+                            _logger.LogError(errorMessage);
+                            return new ServiceResponse<HttpContent>()
+                            {
+                                IsSuccess = false,
+                                StatusCode = headerResult.StatusCode,
+                                ErrorMessage = errorMessage
+                            };
+                        }
+
+                        _httpClient.DefaultRequestHeaders.Add(header.HeaderName, headerResult.Data);
                     }
                 }
 
@@ -43,7 +74,8 @@ namespace ExtService.GateWay.API.Services.SProxing
 
                 if (request.Body != null)
                 {
-                    httpRequest.Content = new StringContent(request.Body, Encoding.UTF8, "application/json");
+                    var contentTransformer = _restProxyContentTransformerFactory.GetRestProxyContentTransformer(request.Method.Method);
+                    httpRequest = await contentTransformer.TransformAsync(httpRequest, request.Body, cancellationToken);
                 }
 
                 var httpResponse = await _httpClient.SendAsync(httpRequest, cancellationToken);

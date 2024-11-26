@@ -1,9 +1,18 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using ExtService.GateWay.DBContext.Constants;
+using ExtService.GateWay.DBContext.Utilities.Attributes;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ExtService.GateWay.DBContext.DBModels
 {
     [Table("Identification")]
+    [HasTrigger(
+        triggerName: "trg_identification_logging",
+        triggerType: TriggerTypeEnum.Row,
+        triggerFunction: "log_transaction",
+        triggerTiming: TriggerTimingsEnum.After,
+        triggerEvents: TriggerEventsEnum.Insert | TriggerEventsEnum.Update | TriggerEventsEnum.Delete
+    )]
     public class Identification
     {
         [Key]
